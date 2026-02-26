@@ -16,7 +16,6 @@ struct Institution {
 let tsinghuaInstitution = Institution(
     name: "清华大学",
     baseUrl: "https://assignment.maic.chat/api",
-//    baseUrl: "http://8.130.106.106:8101/api",
     emailDomains: [
         "mails.tsinghua.edu.cn",
         "tsinghua.edu.cn"

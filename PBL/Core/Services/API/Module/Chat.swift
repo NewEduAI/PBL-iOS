@@ -184,6 +184,8 @@ final class ChatWebSocketService {
             content.title = message.senderName
             content.body = message.text
             content.sound = .default
+            content.badge = NSNumber(value: NSApplication.shared.dockTile.badgeLabel.isEmpty ? 1 : (Int(NSApplication.shared.dockTile.badgeLabel) ?? 0) + 1)
+
             let request = UNNotificationRequest(
                 identifier: message.id,
                 content: content,

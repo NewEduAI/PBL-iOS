@@ -19,8 +19,6 @@ struct GroupMember: Codable, Identifiable {
     let actorType: String?
     /// Nil means the role slot is unassigned and available to claim.
     let userId: String?
-    /// Whether the member is currently active/online.
-    let isActive: Bool = false
 
     var id: String { actorId }
 
@@ -44,7 +42,6 @@ struct GroupMember: Codable, Identifiable {
         case roleDivision = "role_division"
         case actorType = "actor_type"
         case userId = "user_id"
-        case isActive = "is_active"
     }
 }
 
@@ -312,6 +309,23 @@ class ProjectAPI: BaseAPI {
             path: "/group/gitlab/get_bash_clone_url",
             method: .post,
             body: Body(groupId: groupId, userId: userId)
+        )
+    }
+
+    /// Get online status for a group member.
+    func getMemberStatus(groupId: String, memberId: String) async throws -> String {
+        struct Body: Codable {
+            let groupId: String
+            let memberId: String
+            enum CodingKeys: String, CodingKey {
+                case groupId = "group_id"
+                case memberId = "member_id"
+            }
+        }
+        return try await request(
+            path: "/group/get_member_status",
+            method: .post,
+            body: Body(groupId: groupId, memberId: memberId)
         )
     }
 }

@@ -225,25 +225,26 @@ struct ChatPanelMacOS: View {
     }
 
     var messageInput: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             TextField("发送消息…", text: $inputText, axis: .vertical)
                 .textFieldStyle(.plain)
+                .font(.callout)
                 .lineLimit(1...4)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
+                    RoundedRectangle(cornerRadius: 8)
                         .fill(Color(NSColor.controlBackgroundColor))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 8)
+                                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
                         )
                 )
                 .onSubmit { sendMessage() }
 
             Button(action: sendMessage) {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 28))
+                Image(systemName: inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "arrow.up.circle" : "arrow.up.circle.fill")
+                    .font(.system(size: 20))
                     .foregroundStyle(
                         inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                         ? Color.secondary
@@ -465,24 +466,32 @@ private struct SessionRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 Image(systemName: "bubble.left")
                     .font(.caption)
                     .foregroundStyle(isSelected ? .white : .secondary)
+                    .frame(width: 16)
                 Text(session.name)
                     .font(.callout)
                     .foregroundStyle(isSelected ? .white : .primary)
                     .lineLimit(1)
                 Spacer()
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 7)
                     .fill(isSelected
-                          ? AnyShapeStyle(Color.accentColor)
+                          ? AnyShapeStyle(LinearGradient(
+                              colors: [
+                                  Color(red: 98/255, green: 83/255, blue: 225/255),
+                                  Color(red: 4/255, green: 190/255, blue: 254/255)
+                              ],
+                              startPoint: .leading,
+                              endPoint: .trailing
+                          ))
                           : AnyShapeStyle(isHovered
-                                          ? Color.primary.opacity(0.06)
+                                          ? Color.primary.opacity(0.05)
                                           : Color.clear))
             )
         }

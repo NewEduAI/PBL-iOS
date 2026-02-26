@@ -478,21 +478,22 @@ struct ProjectViewMacOS: View {
     }
 
     func loadOnlineStatuses() async {
-        // Build a map of actorId → is_active from members
-        // The GroupMembers API gives us is_active which indicates if a member is online
-        var map: [String: Bool] = [:]
+        guard !groupId.isEmpty else { return }
+        let api = ProjectAPI(baseURL: appState.organizationBaseUrl, token: appState.token)
+        var statusMap: [String: String] = [:]
+
+        // Fetch status for each member
         for member in members {
-            // is_active indicates if the member is currently active/online
-            map[member.actorId] = member.isActive
-            let status = member.isActive ? "online" : "offline"
-            print("📊 \(member.actorName) (\(member.actorId)) → \(status) (isActive: \(member.isActive))")
+            do {
+                let status = try await api.getMemberStatus(groupId: groupId, memberId: member.actorId)
+                statusMap[member.actorId] = status
+                print("📊 \(member.actorName) → \(status)")
+            } catch {
+                print("⚠️  Failed to fetch status for \(member.actorName): \(error)")
+                statusMap[member.actorId] = "offline"
+            }
         }
 
-        // Store as String for consistency with UI logic
-        var statusMap: [String: String] = [:]
-        for (actorId, isActive) in map {
-            statusMap[actorId] = isActive ? "online" : "offline"
-        }
         memberOnlineStatus = statusMap
     }
 
