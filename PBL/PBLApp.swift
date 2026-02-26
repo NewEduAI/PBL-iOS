@@ -9,9 +9,17 @@ import SwiftUI
 
 @main
 struct PBLApp: App {
+    @State private var appState = AppState()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if appState.token != "" {
+                MainTabViewiOS()
+                    .environment(appState)
+            } else {
+                LoginViewiOS()
+                    .environment(appState)
+            }
         }
     }
 }

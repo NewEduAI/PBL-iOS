@@ -7,18 +7,80 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		CA6977F62F4ED5EA0028AD05 /* PBL Zone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PBL Zone.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CABE717A2F20722E001E36B6 /* PBL.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PBL.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		CA2E18902F20DF1B0019A21F /* Exceptions for "PBL" folder in "PBL" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Features/Auth/View/LoginViewMacOS.swift,
+				Features/ProjectPanel/View/ProjectPanelViewMacOS.swift,
+				Features/ProjectView/Components/ChatPanelMacOS.swift,
+				Features/ProjectView/Components/GitPanelMacOS.swift,
+				Features/ProjectView/Components/IssueBoardMacOS.swift,
+				Features/ProjectView/Components/RoleSelectionMacOS.swift,
+				Features/ProjectView/ProjectViewMacOS.swift,
+				Info.plist,
+				MainTabView/MacOS.swift,
+				PBLAppZone.swift,
+			);
+			target = CABE71792F20722E001E36B6 /* PBL */;
+		};
+		CA6978072F4ED6D90028AD05 /* Exceptions for "PBL" folder in "PBL Zone" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				Core/AppState.swift,
+				Core/Constant/Institution.swift,
+				Core/Services/API/Main.swift,
+				Core/Services/API/Module/Base.swift,
+				Core/Services/API/Module/Chat.swift,
+				Core/Services/API/Module/Issue.swift,
+				Core/Services/API/Module/Project.swift,
+				Core/Services/API/Module/User.swift,
+				Features/Auth/Service/AuthService.swift,
+				Features/Auth/View/LoginViewMacOS.swift,
+				Features/Notification/Component/NotificationCard.swift,
+				Features/Notification/NotificationView.swift,
+				Features/Profile/View/UserProfileView.swift,
+				Features/ProjectPanel/Component/ProjectCard.swift,
+				Features/ProjectPanel/Component/ProjectCardStudent.swift,
+				Features/ProjectPanel/Component/ProjectCardTeacher.swift,
+				Features/ProjectPanel/View/ProjectPanelViewMacOS.swift,
+				Features/ProjectView/Components/ChatPanelMacOS.swift,
+				Features/ProjectView/Components/GitPanelMacOS.swift,
+				Features/ProjectView/Components/IssueBoardMacOS.swift,
+				Features/ProjectView/Components/RoleSelectionMacOS.swift,
+				Features/ProjectView/ProjectViewMacOS.swift,
+				MainTabView/MacOS.swift,
+				PBLAppZone.swift,
+			);
+			target = CA6977F52F4ED5EA0028AD05 /* PBL Zone */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CABE717C2F20722E001E36B6 /* PBL */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CA2E18902F20DF1B0019A21F /* Exceptions for "PBL" folder in "PBL" target */,
+				CA6978072F4ED6D90028AD05 /* Exceptions for "PBL" folder in "PBL Zone" target */,
+			);
 			path = PBL;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		CA6977F32F4ED5EA0028AD05 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CABE71772F20722E001E36B6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -41,6 +103,7 @@
 			isa = PBXGroup;
 			children = (
 				CABE717A2F20722E001E36B6 /* PBL.app */,
+				CA6977F62F4ED5EA0028AD05 /* PBL Zone.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +111,25 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		CA6977F52F4ED5EA0028AD05 /* PBL Zone */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CA6977FE2F4ED5EC0028AD05 /* Build configuration list for PBXNativeTarget "PBL Zone" */;
+			buildPhases = (
+				CA6977F22F4ED5EA0028AD05 /* Sources */,
+				CA6977F32F4ED5EA0028AD05 /* Frameworks */,
+				CA6977F42F4ED5EA0028AD05 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "PBL Zone";
+			packageProductDependencies = (
+			);
+			productName = "PBL Zone";
+			productReference = CA6977F62F4ED5EA0028AD05 /* PBL Zone.app */;
+			productType = "com.apple.product-type.application";
+		};
 		CABE71792F20722E001E36B6 /* PBL */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = CABE71852F207236001E36B6 /* Build configuration list for PBXNativeTarget "PBL" */;
@@ -80,6 +162,9 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					CA6977F52F4ED5EA0028AD05 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					CABE71792F20722E001E36B6 = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -100,11 +185,19 @@
 			projectRoot = "";
 			targets = (
 				CABE71792F20722E001E36B6 /* PBL */,
+				CA6977F52F4ED5EA0028AD05 /* PBL Zone */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		CA6977F42F4ED5EA0028AD05 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CABE71782F20722E001E36B6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +208,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		CA6977F22F4ED5EA0028AD05 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CABE71762F20722E001E36B6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -125,6 +225,84 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		CA6977FF2F4ED5EC0028AD05 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KT3RLF5V3W;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "MAIC.PBL-Zone";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		CA6978002F4ED5EC0028AD05 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KT3RLF5V3W;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "MAIC.PBL-Zone";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		CABE71832F207236001E36B6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -251,11 +429,17 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = KT3RLF5V3W;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PBL/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "MAIC-PBL";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -266,9 +450,15 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = MAIC.PBL;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zlnn.PBL;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -283,11 +473,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = KT3RLF5V3W;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PBL/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "MAIC-PBL";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -298,9 +491,14 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = MAIC.PBL;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zlnn.PBL;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -313,6 +511,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		CA6977FE2F4ED5EC0028AD05 /* Build configuration list for PBXNativeTarget "PBL Zone" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CA6977FF2F4ED5EC0028AD05 /* Debug */,
+				CA6978002F4ED5EC0028AD05 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		CABE71752F20722E001E36B6 /* Build configuration list for PBXProject "PBL" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
