@@ -550,10 +550,10 @@ private struct MessageBubble: View {
                     .foregroundStyle(isOwn ? .white : .primary)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(
-                        !isOwn ? AnyShapeStyle(
+                        !isOwn ?
                             RoundedRectangle(cornerRadius: 12)
                                 .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
-                        ) : AnyShapeStyle(Color.clear)
+                            : nil
                     )
                 Text(formattedTime)
                     .font(.caption2)
