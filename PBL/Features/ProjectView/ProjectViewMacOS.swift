@@ -50,6 +50,8 @@ struct ProjectViewMacOS: View {
     @State private var members: [GroupMember] = []
     @State private var userRole: GroupMember? = nil
     @State private var activationStatus: [String: Bool] = [:]
+    /// Maps userId → online status string (e.g. "online", "offline")
+    @State private var memberOnlineStatus: [String: String] = [:]
     @State private var isLoading = true
     @State private var error: String? = nil
 
@@ -394,15 +396,22 @@ struct ProjectViewMacOS: View {
     @ViewBuilder
     func memberAvatar(_ member: GroupMember) -> some View {
         let color = roleAccentColor(member.actorDescription)
-        ZStack {
+        let status = memberOnlineStatus[member.userId ?? ""] ?? "offline"
+        let isOnline = status == "online"
+        ZStack(alignment: .bottomTrailing) {
             Circle()
                 .fill(color)
                 .frame(width: 28, height: 28)
             Text(String(member.actorName.prefix(1)))
                 .font(.caption2.bold())
                 .foregroundStyle(.white)
+                .frame(width: 28, height: 28)
+            Circle()
+                .fill(isOnline ? Color.green : Color.gray.opacity(0.5))
+                .frame(width: 8, height: 8)
+                .overlay(Circle().stroke(Color(NSColor.controlBackgroundColor), lineWidth: 1.5))
         }
-        .help("\(member.actorName) · \(member.actorDescription)")
+        .help("\(member.actorName) · \(member.actorDescription) · \(isOnline ? "在线" : "离线")")
     }
     
     @ViewBuilder
@@ -457,14 +466,28 @@ struct ProjectViewMacOS: View {
             return
         }
 
-        // Load issues and members in parallel
+        // Load issues, members, and online statuses in parallel
         async let issuesLoad: Void = loadIssues()
         async let membersLoad: Void = {
             do {
                 members = try await api.getGroupMembers(groupId: groupId)
             } catch {}
         }()
-        _ = await (issuesLoad, membersLoad)
+        async let statusLoad: Void = loadOnlineStatuses()
+        _ = await (issuesLoad, membersLoad, statusLoad)
+    }
+
+    func loadOnlineStatuses() async {
+        guard !groupId.isEmpty else { return }
+        let chatAPI = ChatAPI(baseURL: appState.organizationBaseUrl, token: appState.token)
+        guard let sessions = try? await chatAPI.getSessions(groupId: groupId, userId: appState.userId) else { return }
+        var map: [String: String] = [:]
+        for session in sessions {
+            for member in session.members ?? [] {
+                map[member.id] = member.status ?? "offline"
+            }
+        }
+        memberOnlineStatus = map
     }
 
     func loadIssues() async {

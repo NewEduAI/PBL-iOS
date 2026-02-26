@@ -587,7 +587,7 @@ private struct JoinProjectSheet: View {
                 userId: appState.userId,
                 projectId: project.projectId,
                 userName: appState.username,
-                userEmail: ""
+                userEmail: appState.email
             )
             onJoined(groupId)
         } catch let err as APIError {
@@ -662,7 +662,7 @@ private struct CreateProjectSheet: View {
                 description: projectDescription,
                 userId: appState.userId,
                 userName: appState.username,
-                userEmail: ""
+                userEmail: appState.email
             )
             onCreated(projectId)
         } catch let err as APIError {
@@ -769,7 +769,7 @@ private struct JoinOpenProjectSheet: View {
                 userId: appState.userId,
                 projectId: project.projectId,
                 userName: appState.username,
-                userEmail: ""
+                userEmail: appState.email
             )
             onJoined(project, groupId)
         } catch let err as APIError {

@@ -6,6 +6,10 @@
 //
 
 import Foundation
+import UserNotifications
+#if canImport(AppKit)
+import AppKit
+#endif
 
 // MARK: - Models
 
@@ -113,12 +117,14 @@ final class ChatWebSocketService {
 
     private let baseURL: String
     private let token: String
+    private let currentUserId: String
     /// Only messages whose session_id matches this are kept.
     private(set) var currentSessionId: String = ""
 
-    init(baseURL: String, token: String) {
+    init(baseURL: String, token: String, currentUserId: String = "") {
         self.baseURL = baseURL
         self.token = token
+        self.currentUserId = currentUserId
     }
 
     func connect(groupId: String, userId: String, sessionId: String) {
@@ -169,6 +175,24 @@ final class ChatWebSocketService {
         wsTask?.send(.string(payload)) { _ in }
     }
 
+    private func sendNotification(for message: ChatMessage) {
+        Task { @MainActor in
+#if canImport(AppKit)
+            guard !NSApplication.shared.isActive else { return }
+#endif
+            let content = UNMutableNotificationContent()
+            content.title = message.senderName
+            content.body = message.text
+            content.sound = .default
+            let request = UNNotificationRequest(
+                identifier: message.id,
+                content: content,
+                trigger: nil
+            )
+            try? await UNUserNotificationCenter.current().add(request)
+        }
+    }
+
     private func startReceiving() {
         receiveTask = Task { [weak self] in
             while !Task.isCancelled {
@@ -208,7 +232,12 @@ final class ChatWebSocketService {
             // Only accept messages that belong to the currently active session
             guard envelope.sessionId == currentSessionId, let msgs = envelope.data else { break }
             let existing = Set(messages.map(\.id))
-            messages.append(contentsOf: msgs.filter { !existing.contains($0.id) })
+            let incoming = msgs.filter { !existing.contains($0.id) }
+            messages.append(contentsOf: incoming)
+            // Notify for messages not sent by the current user
+            for msg in incoming where msg.sender != currentUserId {
+                sendNotification(for: msg)
+            }
         case "message_sent":
             if let tmpId = envelope.tmpId, let realId = envelope.messageId {
                 sentConfirmations.append(SentConfirmation(tmpId: tmpId, realId: realId))

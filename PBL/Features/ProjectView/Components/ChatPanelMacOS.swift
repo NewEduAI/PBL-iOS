@@ -389,7 +389,8 @@ struct ChatPanelMacOS: View {
         wsService?.disconnect()
         let ws = ChatWebSocketService(
             baseURL: appState.organizationBaseUrl,
-            token: appState.token
+            token: appState.token,
+            currentUserId: appState.userId
         )
         wsService = ws
 

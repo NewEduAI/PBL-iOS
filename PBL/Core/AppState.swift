@@ -12,6 +12,7 @@ class AppState {
     var userId: String = ""
     var token: String = ""
     var username: String = "未登录"
+    var email: String = ""
     var isTeacher: Bool = false
 
     var organization: String = "个人"
@@ -23,6 +24,7 @@ class AppState {
         userId: String,
         token: String,
         username: String,
+        email: String,
         isTeacher: Bool,
         organization: String,
         organizationBaseUrl: String
@@ -30,6 +32,7 @@ class AppState {
         self.userId = userId
         self.token = token
         self.username = username
+        self.email = email
         self.isTeacher = isTeacher
         self.organization = organization
         self.organizationBaseUrl = organizationBaseUrl
@@ -40,6 +43,7 @@ class AppState {
         self.userId = ""
         self.token = ""
         self.username = "未登录"
+        self.email = ""
         self.isTeacher = false
         self.organization = "个人"
         self.organizationBaseUrl = "https://assignment.maic.chat/api"

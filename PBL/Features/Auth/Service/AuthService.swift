@@ -23,6 +23,7 @@ func tryLogin(
         userId: authResponse.userId,
         token: authResponse.token,
         username: userInfo.name,
+        email: email,
         isTeacher: userInfo.is_teacher,
         organization: institution.name,
         organizationBaseUrl: institution.baseUrl
@@ -52,6 +53,7 @@ func tryRegister(
         userId: authResponse.userId,
         token: authResponse.token,
         username: name,
+        email: email,
         isTeacher: isTeacher,
         organization: institution.name,
         organizationBaseUrl: institution.baseUrl

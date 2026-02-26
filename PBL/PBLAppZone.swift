@@ -6,10 +6,16 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 @main
 struct PBLAppZone: App {
     @State private var appState = AppState()
+
+    init() {
+        UNUserNotificationCenter.current()
+            .requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    }
 
     var body: some Scene {
         // Main window — login or project panel
