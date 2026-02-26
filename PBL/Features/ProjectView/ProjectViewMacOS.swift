@@ -396,8 +396,8 @@ struct ProjectViewMacOS: View {
     @ViewBuilder
     func memberAvatar(_ member: GroupMember) -> some View {
         let color = roleAccentColor(member.actorDescription)
-        let status = memberOnlineStatus[member.actorId] ?? "offline"
-        let isOnline = status == "online"
+        let status = memberOnlineStatus[member.actorId] ?? "离线"
+        let isOnline = status != "离线"
         ZStack(alignment: .bottomTrailing) {
             Circle()
                 .fill(color)
