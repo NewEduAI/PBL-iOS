@@ -225,19 +225,19 @@ struct ChatPanelMacOS: View {
     }
 
     var messageInput: some View {
-        HStack(spacing: 12) {
-            TextField("发送消息…", text: $inputText, axis: .vertical)
+        HStack(spacing: 10) {
+            TextField("发送消息…", text: $inputText)
                 .textFieldStyle(.plain)
                 .font(.callout)
-                .lineLimit(1...4)
+                .lineLimit(1)
                 .padding(.horizontal, 14)
-                .padding(.vertical, 10)
+                .padding(.vertical, 9)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color(NSColor.controlBackgroundColor))
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+                                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
                         )
                 )
                 .onSubmit { sendMessage() }
@@ -245,10 +245,21 @@ struct ChatPanelMacOS: View {
             Button(action: sendMessage) {
                 Image(systemName: inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "arrow.up.circle" : "arrow.up.circle.fill")
                     .font(.system(size: 20))
-                    .foregroundStyle(
-                        inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                        ? Color.secondary
-                        : Color.accentColor
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 9)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSending
+                                  ? AnyShapeStyle(Color.secondary.opacity(0.3))
+                                  : AnyShapeStyle(LinearGradient(
+                                      colors: [
+                                          Color(red: 98/255, green: 83/255, blue: 225/255),
+                                          Color(red: 4/255, green: 190/255, blue: 254/255)
+                                      ],
+                                      startPoint: .leading,
+                                      endPoint: .trailing
+                                  )))
                     )
             }
             .buttonStyle(.plain)
@@ -272,7 +283,18 @@ struct ChatPanelMacOS: View {
                 Text("对话名称")
                     .font(.callout.bold())
                 TextField("输入对话名称", text: $newSessionName)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
+                    .font(.callout)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(NSColor.controlBackgroundColor))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                            )
+                    )
             }
 
             // Member picker
@@ -340,17 +362,39 @@ struct ChatPanelMacOS: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("取消") {
+                Button {
                     newSessionName = ""
                     selectedMemberIds = []
                     showNewSession = false
+                } label: {
+                    Text("取消")
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 9)
                 }
                 .buttonStyle(.bordered)
 
-                Button(isCreatingSession ? "创建中…" : "创建") {
+                Button {
                     Task { await createSession() }
+                } label: {
+                    Text(isCreatingSession ? "创建中…" : "创建")
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 9)
                 }
-                .buttonStyle(.borderedProminent)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(newSessionName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || selectedMemberIds.isEmpty || isCreatingSession
+                              ? AnyShapeStyle(Color.secondary.opacity(0.3))
+                              : AnyShapeStyle(LinearGradient(
+                                  colors: [
+                                      Color(red: 98/255, green: 83/255, blue: 225/255),
+                                      Color(red: 4/255, green: 190/255, blue: 254/255)
+                                  ],
+                                  startPoint: .leading,
+                                  endPoint: .trailing
+                              )))
+                )
+                .foregroundStyle(.white)
+                .buttonStyle(.plain)
                 .disabled(
                     newSessionName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                     || selectedMemberIds.isEmpty
