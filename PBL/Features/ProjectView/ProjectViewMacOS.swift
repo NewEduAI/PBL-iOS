@@ -396,7 +396,7 @@ struct ProjectViewMacOS: View {
     @ViewBuilder
     func memberAvatar(_ member: GroupMember) -> some View {
         let color = roleAccentColor(member.actorDescription)
-        let status = memberOnlineStatus[member.userId ?? ""] ?? "offline"
+        let status = memberOnlineStatus[member.actorId] ?? "offline"
         let isOnline = status == "online"
         ZStack(alignment: .bottomTrailing) {
             Circle()
@@ -478,16 +478,22 @@ struct ProjectViewMacOS: View {
     }
 
     func loadOnlineStatuses() async {
-        guard !groupId.isEmpty else { return }
-        let chatAPI = ChatAPI(baseURL: appState.organizationBaseUrl, token: appState.token)
-        guard let sessions = try? await chatAPI.getSessions(groupId: groupId, userId: appState.userId) else { return }
-        var map: [String: String] = [:]
-        for session in sessions {
-            for member in session.members ?? [] {
-                map[member.id] = member.status ?? "offline"
-            }
+        // Build a map of actorId → is_active from members
+        // The GroupMembers API gives us is_active which indicates if a member is online
+        var map: [String: Bool] = [:]
+        for member in members {
+            // is_active indicates if the member is currently active/online
+            map[member.actorId] = member.isActive
+            let status = member.isActive ? "online" : "offline"
+            print("📊 \(member.actorName) (\(member.actorId)) → \(status) (isActive: \(member.isActive))")
         }
-        memberOnlineStatus = map
+
+        // Store as String for consistency with UI logic
+        var statusMap: [String: String] = [:]
+        for (actorId, isActive) in map {
+            statusMap[actorId] = isActive ? "online" : "offline"
+        }
+        memberOnlineStatus = statusMap
     }
 
     func loadIssues() async {

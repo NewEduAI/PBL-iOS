@@ -19,6 +19,8 @@ struct GroupMember: Codable, Identifiable {
     let actorType: String?
     /// Nil means the role slot is unassigned and available to claim.
     let userId: String?
+    /// Whether the member is currently active/online.
+    let isActive: Bool = false
 
     var id: String { actorId }
 
@@ -42,6 +44,7 @@ struct GroupMember: Codable, Identifiable {
         case roleDivision = "role_division"
         case actorType = "actor_type"
         case userId = "user_id"
+        case isActive = "is_active"
     }
 }
 
