@@ -78,7 +78,10 @@ struct ChatPanelMacOS: View {
     var sessionSidebar: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
-            HStack {
+            HStack(spacing: 8) {
+                Image(systemName: "bubble.left.and.bubble.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 Text("对话")
                     .font(.callout.bold())
                 Spacer()
@@ -86,12 +89,13 @@ struct ChatPanelMacOS: View {
                     showNewSession = true
                 } label: {
                     Image(systemName: "square.and.pencil")
+                        .font(.system(size: 14))
                 }
                 .buttonStyle(.borderless)
                 .help("新建对话")
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
 
             Divider()
 
@@ -116,7 +120,7 @@ struct ChatPanelMacOS: View {
                 .padding(.top, 30)
             } else {
                 ScrollView {
-                    VStack(spacing: 2) {
+                    VStack(spacing: 4) {
                         ForEach(sessions) { session in
                             SessionRow(
                                 session: session,
@@ -126,8 +130,8 @@ struct ChatPanelMacOS: View {
                             }
                         }
                     }
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 6)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
                 }
             }
 
@@ -225,27 +229,28 @@ struct ChatPanelMacOS: View {
     }
 
     var messageInput: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             TextField("发送消息…", text: $inputText, axis: .vertical)
                 .textFieldStyle(.plain)
+                .font(.callout)
                 .lineLimit(1...4)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
+                    RoundedRectangle(cornerRadius: 10)
                         .fill(Color(NSColor.controlBackgroundColor))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 10)
+                                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
                         )
                 )
                 .onSubmit { sendMessage() }
 
             Button(action: sendMessage) {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 28))
+                Image(systemName: isSending ? "hourglass.circle.fill" : "arrow.up.circle.fill")
+                    .font(.system(size: 24))
                     .foregroundStyle(
-                        inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSending
                         ? Color.secondary
                         : Color.accentColor
                     )
@@ -272,19 +277,21 @@ struct ChatPanelMacOS: View {
             Divider()
 
             // Session name
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("对话名称")
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
                 TextField("输入对话名称", text: $newSessionName)
+                    .font(.callout)
                     .textFieldStyle(.roundedBorder)
+                    .controlSize(.regular)
             }
             .padding(.horizontal, 24)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
+            .padding(.top, 20)
+            .padding(.bottom, 16)
 
             // Member picker
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("选择成员（至少选一位）")
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
@@ -293,9 +300,10 @@ struct ChatPanelMacOS: View {
                     Text("暂无其他成员")
                         .font(.callout)
                         .foregroundStyle(.tertiary)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity, alignment: .center)
                 } else {
-                    VStack(spacing: 0) {
+                    VStack(spacing: 1) {
                         ForEach(selectableMembers) { member in
                             let isSelected = selectedMemberIds.contains(member.actorId)
                             Button {
@@ -305,35 +313,40 @@ struct ChatPanelMacOS: View {
                                     selectedMemberIds.insert(member.actorId)
                                 }
                             } label: {
-                                HStack(spacing: 10) {
+                                HStack(spacing: 12) {
                                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                        .font(.headline)
                                         .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
-                                    VStack(alignment: .leading, spacing: 1) {
+                                        .frame(width: 20)
+                                    VStack(alignment: .leading, spacing: 2) {
                                         Text(member.actorName)
                                             .font(.callout)
                                             .foregroundStyle(.primary)
                                         Text(member.actorDescription)
                                             .font(.caption2)
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(.tertiary)
                                             .lineLimit(1)
                                     }
                                     Spacer()
                                 }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(isSelected ? Color.accentColor.opacity(0.06) : Color.clear)
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
+                            .background(isSelected ? Color.accentColor.opacity(0.08) : Color.clear)
                         }
                     }
-                    .padding(4)
                     .background(Color(NSColor.controlBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                    )
                 }
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 16)
+            .padding(.bottom, 20)
 
             Divider()
 
@@ -465,24 +478,25 @@ private struct SessionRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 Image(systemName: "bubble.left")
                     .font(.caption)
                     .foregroundStyle(isSelected ? .white : .secondary)
+                    .frame(width: 16)
                 Text(session.name)
                     .font(.callout)
                     .foregroundStyle(isSelected ? .white : .primary)
                     .lineLimit(1)
                 Spacer()
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
             .background(
-                RoundedRectangle(cornerRadius: 7)
+                RoundedRectangle(cornerRadius: 8)
                     .fill(isSelected
                           ? AnyShapeStyle(Color.accentColor)
                           : AnyShapeStyle(isHovered
-                                          ? Color.primary.opacity(0.06)
+                                          ? Color.primary.opacity(0.05)
                                           : Color.clear))
             )
         }
@@ -497,54 +511,61 @@ private struct MessageBubble: View {
     let message: ChatMessage
     let isOwn: Bool
 
+    private static let avatarColors: [Color] = [.blue, .purple, .orange, .indigo, .teal, .pink, .red, .cyan]
+
+    private var avatarColor: Color {
+        Self.avatarColors[abs(message.senderName.hashValue) % Self.avatarColors.count]
+    }
+
     var body: some View {
-        HStack(alignment: .bottom, spacing: 8) {
+        HStack(alignment: .bottom, spacing: 10) {
             if isOwn { Spacer(minLength: 60) }
 
             if !isOwn {
                 ZStack {
                     Circle()
-                        .fill(Color.purple.opacity(0.2))
-                        .frame(width: 28, height: 28)
+                        .fill(avatarColor)
+                        .frame(width: 32, height: 32)
                     Text(String(message.senderName.prefix(1)))
                         .font(.caption2.bold())
-                        .foregroundStyle(.purple)
+                        .foregroundStyle(.white)
                 }
             }
 
-            VStack(alignment: isOwn ? .trailing : .leading, spacing: 3) {
+            VStack(alignment: isOwn ? .trailing : .leading, spacing: 4) {
                 if !isOwn {
                     Text(message.senderName)
-                        .font(.caption2.bold())
+                        .font(.caption.bold())
                         .foregroundStyle(.secondary)
-                        .padding(.leading, 4)
                 }
                 Text(message.text)
                     .font(.callout)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
                     .background(
                         isOwn
                         ? AnyShapeStyle(Color.accentColor)
                         : AnyShapeStyle(Color(NSColor.controlBackgroundColor))
                     )
                     .foregroundStyle(isOwn ? .white : .primary)
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: 16)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        !isOwn ? AnyShapeStyle(
+                            RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                        ) : AnyShapeStyle(Color.clear)
                     )
                 Text(formattedTime)
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
-                    .padding(.horizontal, 4)
             }
 
             if isOwn {
-                // Own messages have no avatar
-            } else {
                 Spacer(minLength: 60)
             }
         }
-        .padding(.vertical, 3)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 8)
     }
 
     var formattedTime: String {
