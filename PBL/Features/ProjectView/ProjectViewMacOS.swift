@@ -466,34 +466,45 @@ struct ProjectViewMacOS: View {
             return
         }
 
-        // Load issues, members, and online statuses in parallel
+        // Load issues and members in parallel
         async let issuesLoad: Void = loadIssues()
         async let membersLoad: Void = {
             do {
                 members = try await api.getGroupMembers(groupId: groupId)
             } catch {}
         }()
-        async let statusLoad: Void = loadOnlineStatuses()
-        _ = await (issuesLoad, membersLoad, statusLoad)
+        _ = await (issuesLoad, membersLoad)
+
+        // Load online statuses AFTER members are loaded
+        await loadOnlineStatuses()
     }
 
     func loadOnlineStatuses() async {
-        guard !groupId.isEmpty else { return }
+        guard !groupId.isEmpty else {
+            print("❌ loadOnlineStatuses: groupId is empty")
+            return
+        }
+        print("🔄 Loading online status for \(members.count) members in group: \(groupId)")
         let api = ProjectAPI(baseURL: appState.organizationBaseUrl, token: appState.token)
         var statusMap: [String: String] = [:]
 
         // Fetch status for each member
         for member in members {
+            print("  Fetching status for \(member.actorName) (actorId: \(member.actorId))")
             do {
                 let status = try await api.getMemberStatus(groupId: groupId, memberId: member.actorId)
+                print("    ✅ Response: \(status)")
                 statusMap[member.actorId] = status
-                print("📊 \(member.actorName) → \(status)")
+            } catch let error as APIError {
+                print("    ❌ APIError: \(error.message)")
+                statusMap[member.actorId] = "offline"
             } catch {
-                print("⚠️  Failed to fetch status for \(member.actorName): \(error)")
+                print("    ❌ Error: \(error) (\(type(of: error)))")
                 statusMap[member.actorId] = "offline"
             }
         }
 
+        print("✅ Final status map: \(statusMap)")
         memberOnlineStatus = statusMap
     }
 
