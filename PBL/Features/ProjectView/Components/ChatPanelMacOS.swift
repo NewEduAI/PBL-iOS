@@ -262,41 +262,32 @@ struct ChatPanelMacOS: View {
     // MARK: - New session sheet
 
     var newSessionSheet: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 20) {
             // Header
             Text("新建对话")
                 .font(.title2.bold())
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
-                .padding(.bottom, 16)
-
-            Divider()
 
             // Session name
             VStack(alignment: .leading, spacing: 6) {
                 Text("对话名称")
-                    .font(.caption.bold())
-                    .foregroundStyle(.secondary)
+                    .font(.callout.bold())
                 TextField("输入对话名称", text: $newSessionName)
                     .textFieldStyle(.roundedBorder)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
 
             // Member picker
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("选择成员（至少选一位）")
-                    .font(.caption.bold())
-                    .foregroundStyle(.secondary)
+                    .font(.callout.bold())
 
                 if selectableMembers.isEmpty {
                     Text("暂无其他成员")
                         .font(.callout)
-                        .foregroundStyle(.tertiary)
-                        .padding(.vertical, 8)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 12)
                 } else {
-                    VStack(spacing: 0) {
+                    VStack(spacing: 1) {
                         ForEach(selectableMembers) { member in
                             let isSelected = selectedMemberIds.contains(member.actorId)
                             Button {
@@ -306,10 +297,12 @@ struct ChatPanelMacOS: View {
                                     selectedMemberIds.insert(member.actorId)
                                 }
                             } label: {
-                                HStack(spacing: 10) {
+                                HStack(spacing: 12) {
                                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                        .font(.headline)
                                         .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
-                                    VStack(alignment: .leading, spacing: 1) {
+                                        .frame(width: 20)
+                                    VStack(alignment: .leading, spacing: 2) {
                                         Text(member.actorName)
                                             .font(.callout)
                                             .foregroundStyle(.primary)
@@ -321,25 +314,26 @@ struct ChatPanelMacOS: View {
                                     Spacer()
                                 }
                                 .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(isSelected ? Color.accentColor.opacity(0.06) : Color.clear)
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                                .padding(.vertical, 10)
+                                .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
+                            .background(isSelected ? Color.accentColor.opacity(0.08) : Color.clear)
                         }
                     }
-                    .padding(4)
                     .background(Color(NSColor.controlBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                    )
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 16)
 
-            Divider()
+            Spacer()
 
             // Action bar
-            HStack {
+            HStack(spacing: 8) {
                 if !selectedMemberIds.isEmpty {
                     Text("已选 \(selectedMemberIds.count) 位成员")
                         .font(.caption)
@@ -363,10 +357,9 @@ struct ChatPanelMacOS: View {
                     || isCreatingSession
                 )
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 14)
         }
-        .frame(width: 380)
+        .padding(24)
+        .frame(width: 400, alignment: .top)
     }
 
     // MARK: - Actions
