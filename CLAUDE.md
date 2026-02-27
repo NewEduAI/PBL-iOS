@@ -49,6 +49,38 @@ xcodebuild -project PBL.xcodeproj -scheme PBL clean
 open PBL.xcodeproj
 ```
 
+## macOS Distribution (DMG)
+
+Personal Team (no Apple Developer Program) — ad-hoc signed, no notarization required.
+Friends need to right-click → Open on first launch, or run `sudo xattr -dr com.apple.quarantine "/Applications/PBL Zone.app"`.
+
+```bash
+# 1. Build release (signing disabled — will be ad-hoc signed manually)
+xcodebuild \
+  -project PBL.xcodeproj \
+  -scheme "PBL Zone" \
+  -configuration Release \
+  -derivedDataPath ~/Desktop/PBLBuild \
+  CODE_SIGN_IDENTITY="-" \
+  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+
+# 2. Ad-hoc sign, verify, package into DMG
+APP=~/Desktop/PBLBuild/Build/Products/Release/PBL\ Zone.app
+OUT=~/Desktop/PBLZone.dmg
+STAGE=$(mktemp -d)
+
+xattr -cs "$APP" && \
+codesign --force --deep --sign - "$APP" && \
+codesign --verify --deep --strict --verbose=2 "$APP" && \
+cp -R "$APP" "$STAGE/" && \
+ln -s /Applications "$STAGE/Applications" && \
+hdiutil create -volname "PBL Zone" -srcfolder "$STAGE" -ov -format UDZO "$OUT" && \
+rm -rf "$STAGE" && \
+echo "Done: $OUT"
+```
+
 ## Architecture
 
 ### Dual-Target Platform Structure

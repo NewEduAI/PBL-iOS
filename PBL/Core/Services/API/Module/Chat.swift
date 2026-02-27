@@ -146,6 +146,28 @@ final class ChatWebSocketService {
         wsTask?.resume()
         isConnected = true
         startReceiving()
+        startPolling(sessionId: sessionId)
+    }
+
+    func switchSession(sessionId: String) {
+        currentSessionId = sessionId
+        messages = []
+        startPolling(sessionId: sessionId)
+    }
+
+    private func startPolling(sessionId: String) {
+        struct PollMessage: Encodable {
+            let type: String
+            let sessionId: String
+            enum CodingKeys: String, CodingKey {
+                case type
+                case sessionId = "session_id"
+            }
+        }
+        guard let data = try? JSONEncoder().encode(
+            PollMessage(type: "start_message_polling", sessionId: sessionId)
+        ), let payload = String(data: data, encoding: .utf8) else { return }
+        wsTask?.send(.string(payload)) { _ in }
     }
 
     func disconnect() {

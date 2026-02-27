@@ -75,7 +75,7 @@ struct ProjectPanelViewMacOS: View {
                 showCreateProject = false
                 Task {
                     await loadData()
-                    openWindow(id: "project-view", value: projectId)
+                    openWindow(id: "project-edit", value: projectId)
                 }
             }
             .environment(appState)
@@ -127,9 +127,9 @@ struct ProjectPanelViewMacOS: View {
                     .padding(.top, 14)
                     .padding(.bottom, 4)
 
-                SidebarActionRow(icon: "ticket", label: "加入课程码") {
-                    showJoinByCode = true
-                }
+//                SidebarActionRow(icon: "ticket", label: "加入课程码") {
+//                    showJoinByCode = true
+//                }
                 SidebarActionRow(icon: "globe", label: "加入开放项目") {
                     showJoinOpen = true
                 }
@@ -276,7 +276,7 @@ struct ProjectPanelViewMacOS: View {
                                 status: project.isPublished == true ? .published : .draft,
                                 selectedId: $selectedId,
                                 onDoubleClick: {
-                                    openWindow(id: "project-view", value: project.projectId)
+                                    openWindow(id: "project-edit", value: project.projectId)
                                 }
                             )
                         }

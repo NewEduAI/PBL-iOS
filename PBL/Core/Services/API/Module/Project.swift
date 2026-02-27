@@ -256,6 +256,27 @@ class ProjectAPI: BaseAPI {
         )
     }
 
+    /// Publish a collaborative project, making it visible to students.
+    func publishProject(projectId: String, userId: String, userName: String, userEmail: String) async throws {
+        struct Body: Codable {
+            let projectId: String
+            let userId: String
+            let userName: String
+            let userEmail: String
+            enum CodingKeys: String, CodingKey {
+                case projectId = "project_id"
+                case userId = "user_id"
+                case userName = "user_name"
+                case userEmail = "user_email"
+            }
+        }
+        try await requestEmpty(
+            path: "/project/publish_project",
+            method: .post,
+            body: Body(projectId: projectId, userId: userId, userName: userName, userEmail: userEmail)
+        )
+    }
+
     /// Delete a collaborative project.
     func deleteCollaborativeProject(projectId: String) async throws {
         try await requestEmpty(
@@ -326,6 +347,25 @@ class ProjectAPI: BaseAPI {
             path: "/group/get_member_status",
             method: .post,
             body: Body(groupId: groupId, memberId: memberId)
+        )
+    }
+
+    /// Send a message to the TA Agent for a project.
+    func sendTAAgentMessage(projectId: String, userId: String, message: String) async throws {
+        struct Body: Codable {
+            let projectId: String
+            let userId: String
+            let message: String
+            enum CodingKeys: String, CodingKey {
+                case projectId = "project_id"
+                case userId = "user_id"
+                case message
+            }
+        }
+        try await requestEmpty(
+            path: "/project/agent/send_message",
+            method: .post,
+            body: Body(projectId: projectId, userId: userId, message: message)
         )
     }
 }

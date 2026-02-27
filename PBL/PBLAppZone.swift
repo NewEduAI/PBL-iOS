@@ -43,5 +43,14 @@ struct PBLAppZone: App {
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
+
+        // Teacher project edit windows — opened via openWindow(id: "project-edit", value: projectId)
+        WindowGroup(id: "project-edit", for: String.self) { $projectId in
+            ProjectEditViewMacOS(projectId: projectId ?? "")
+                .environment(appState)
+                .frame(minWidth: 900, minHeight: 600)
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
     }
 }

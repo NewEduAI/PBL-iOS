@@ -423,19 +423,11 @@ struct ChatPanelMacOS: View {
     }
 
     func selectSession(_ session: ChatSession) async {
-        // Disconnect previous WS and reset
-        wsService?.disconnect()
-        let ws = ChatWebSocketService(
-            baseURL: appState.organizationBaseUrl,
-            token: appState.token,
-            currentUserId: appState.userId
-        )
-        wsService = ws
-
         selectedSession = session
         isLoadingHistory = true
         restMessages = []
 
+        // Load history first
         let api = ChatAPI(baseURL: appState.organizationBaseUrl, token: appState.token)
         do {
             restMessages = try await api.getHistory(
@@ -447,7 +439,19 @@ struct ChatPanelMacOS: View {
 
         isLoadingHistory = false
         scrollTrigger = UUID()
-        ws.connect(groupId: groupId, userId: appState.userId, sessionId: session.id)
+
+        // Keep one persistent WS connection per group; just switch session polling
+        if let ws = wsService {
+            ws.switchSession(sessionId: session.id)
+        } else {
+            let ws = ChatWebSocketService(
+                baseURL: appState.organizationBaseUrl,
+                token: appState.token,
+                currentUserId: appState.userId
+            )
+            wsService = ws
+            ws.connect(groupId: groupId, userId: appState.userId, sessionId: session.id)
+        }
     }
 
     func sendMessage() {

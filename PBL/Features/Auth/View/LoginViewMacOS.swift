@@ -62,7 +62,7 @@ struct LoginViewMacOS: View {
                     Text("子曰：知而不行，与不知同。")
                         .font(.system(size: 20))
                         .foregroundStyle(Color(red: 55/255, green: 65/255, blue: 81/255))
-                    Text("——《论语·阳货》")
+                    Text("《论语·阳货》")
                         .font(.system(size: 16))
                         .foregroundStyle(Color(red: 75/255, green: 85/255, blue: 99/255))
                 }
