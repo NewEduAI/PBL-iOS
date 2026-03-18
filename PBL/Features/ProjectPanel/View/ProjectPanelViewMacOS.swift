@@ -29,6 +29,7 @@ struct ProjectPanelViewMacOS: View {
     @State private var showJoinOpen = false
     @State private var showCreateProject = false
     @State private var pendingJoinProject: Project? = nil
+    @State private var showAccessTokens = false
 
     private var brandGradient: LinearGradient {
         LinearGradient(
@@ -80,6 +81,10 @@ struct ProjectPanelViewMacOS: View {
             }
             .environment(appState)
         }
+        .sheet(isPresented: $showAccessTokens) {
+            AccessTokenSheet()
+                .environment(appState)
+        }
         .sheet(item: $pendingJoinProject) { project in
             JoinProjectSheet(project: project) { groupId in
                 pendingJoinProject = nil
@@ -129,6 +134,9 @@ struct ProjectPanelViewMacOS: View {
 //                }
                 SidebarActionRow(icon: "globe", label: "加入开放项目") {
                     showJoinOpen = true
+                }
+                SidebarActionRow(icon: "key", label: "添加到其他 AI 应用") {
+                    showAccessTokens = true
                 }
                 if appState.isTeacher {
                     SidebarActionRow(icon: "plus.circle", label: "创建项目") {
@@ -901,5 +909,256 @@ struct BrandingText: View {
         }
         .font(.system(size: fontSize, weight: .bold))
         .italic()
+    }
+}
+
+// MARK: - Access Token Management
+
+private struct AccessTokenSheet: View {
+    @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var tokens: [AccessToken] = []
+    @State private var isLoading = true
+    @State private var newTokenName = ""
+    @State private var isCreating = false
+    @State private var createdToken: String? = nil
+    @State private var copied = false
+    @State private var revokeTarget: AccessToken? = nil
+    @State private var error: String? = nil
+
+    private var brandGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color(red: 98/255, green: 83/255, blue: 225/255),
+                Color(red: 4/255, green: 190/255, blue: 254/255)
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("添加到其他 AI 应用")
+                        .font(.title2.bold())
+                    Text("创建访问令牌，让 OpenClaw 等 AI 应用访问你的项目数据。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(24)
+
+            Divider()
+
+            // Created token banner (shown once after creation)
+            if let token = createdToken {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("令牌已创建 — 请立即复制，关闭后无法再次查看", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+
+                    HStack {
+                        Text(token)
+                            .font(.system(.caption, design: .monospaced))
+                            .textSelection(.enabled)
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(8)
+                            .background(Color(NSColor.controlBackgroundColor))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                        Button {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(token, forType: .string)
+                            copied = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { copied = false }
+                        } label: {
+                            Label(copied ? "已复制" : "复制", systemImage: copied ? "checkmark" : "doc.on.doc")
+                                .font(.callout)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(Color.orange.opacity(0.06))
+
+                Divider()
+            }
+
+            // Token list
+            if isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if tokens.isEmpty && createdToken == nil {
+                VStack(spacing: 8) {
+                    Image(systemName: "key.slash")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.tertiary)
+                    Text("暂无访问令牌")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    VStack(spacing: 1) {
+                        ForEach(tokens) { token in
+                            HStack(spacing: 12) {
+                                Image(systemName: token.isActive ? "key.fill" : "key")
+                                    .foregroundStyle(token.isActive ? .green : .secondary)
+                                    .frame(width: 18)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(token.name)
+                                        .font(.callout.bold())
+                                    Text(token.createdAt.prefix(10))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+
+                                if token.isActive {
+                                    Button {
+                                        revokeTarget = token
+                                    } label: {
+                                        Text("撤销")
+                                            .font(.caption)
+                                            .foregroundStyle(.red)
+                                    }
+                                    .buttonStyle(.borderless)
+                                } else {
+                                    Text("已撤销")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+            }
+
+            if let error {
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 24)
+            }
+
+            Divider()
+
+            // Create new token
+            HStack(spacing: 10) {
+                TextField("令牌名称（如 OpenClaw）", text: $newTokenName)
+                    .textFieldStyle(.plain)
+                    .font(.callout)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 9)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(NSColor.controlBackgroundColor))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                            )
+                    )
+                    .onSubmit { Task { await createToken() } }
+
+                Button {
+                    Task { await createToken() }
+                } label: {
+                    Text(isCreating ? "创建中…" : "创建令牌")
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 9)
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(newTokenName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isCreating
+                              ? AnyShapeStyle(Color.secondary.opacity(0.3))
+                              : AnyShapeStyle(brandGradient))
+                )
+                .foregroundStyle(.white)
+                .buttonStyle(.plain)
+                .disabled(newTokenName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isCreating)
+            }
+            .padding(24)
+        }
+        .frame(width: 560, height: 500)
+        .task { await loadTokens() }
+        .alert("撤销令牌", isPresented: Binding(
+            get: { revokeTarget != nil },
+            set: { if !$0 { revokeTarget = nil } }
+        )) {
+            Button("取消", role: .cancel) { revokeTarget = nil }
+            Button("撤销", role: .destructive) {
+                if let t = revokeTarget {
+                    Task { await revokeToken(t) }
+                }
+            }
+        } message: {
+            Text("撤销后，使用此令牌的应用将立即失去访问权限。")
+        }
+    }
+
+    func loadTokens() async {
+        isLoading = true
+        error = nil
+        let api = UserAPI(baseURL: appState.organizationBaseUrl, token: appState.token)
+        do {
+            tokens = try await api.listAccessTokens()
+        } catch let err as APIError {
+            error = err.message
+        } catch {
+            self.error = error.localizedDescription
+        }
+        isLoading = false
+    }
+
+    func createToken() async {
+        let name = newTokenName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        isCreating = true
+        error = nil
+        let api = UserAPI(baseURL: appState.organizationBaseUrl, token: appState.token)
+        do {
+            let result = try await api.createAccessToken(name: name)
+            createdToken = result.token
+            newTokenName = ""
+            await loadTokens()
+        } catch let err as APIError {
+            error = err.message
+        } catch {
+            self.error = error.localizedDescription
+        }
+        isCreating = false
+    }
+
+    func revokeToken(_ token: AccessToken) async {
+        error = nil
+        let api = UserAPI(baseURL: appState.organizationBaseUrl, token: appState.token)
+        do {
+            try await api.revokeAccessToken(tokenId: token.id)
+            revokeTarget = nil
+            await loadTokens()
+        } catch let err as APIError {
+            error = err.message
+        } catch {
+            self.error = error.localizedDescription
+        }
     }
 }

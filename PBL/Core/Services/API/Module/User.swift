@@ -60,6 +60,32 @@ struct UserInfoResponse: Codable {
     let is_teacher: Bool
 }
 
+// MARK: - Access Tokens
+
+struct AccessToken: Codable, Identifiable {
+    let id: String
+    let name: String
+    let createdAt: String
+    let isActive: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case name
+        case createdAt = "created_at"
+        case isActive = "is_active"
+    }
+}
+
+struct CreateTokenResponse: Codable {
+    let tokenId: String
+    let token: String
+
+    enum CodingKeys: String, CodingKey {
+        case tokenId = "token_id"
+        case token
+    }
+}
+
 // MARK: - API
 
 class UserAPI: BaseAPI {
@@ -91,5 +117,30 @@ class UserAPI: BaseAPI {
             method: .post
         )
         return response
+    }
+
+    // MARK: Access Tokens
+
+    func createAccessToken(name: String) async throws -> CreateTokenResponse {
+        struct Body: Codable { let name: String }
+        return try await request(
+            path: prefix + "/access_tokens",
+            method: .post,
+            body: Body(name: name)
+        )
+    }
+
+    func listAccessTokens() async throws -> [AccessToken] {
+        try await request(
+            path: prefix + "/access_tokens",
+            method: .get
+        )
+    }
+
+    func revokeAccessToken(tokenId: String) async throws {
+        try await requestEmpty(
+            path: prefix + "/access_tokens/\(tokenId)",
+            method: .delete
+        )
     }
 }
