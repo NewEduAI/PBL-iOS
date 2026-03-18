@@ -54,10 +54,7 @@ struct RoleSelectionMacOS: View {
         VStack(spacing: 0) {
             // Header
             VStack(spacing: 8) {
-                Text("MAIC-PBL")
-                    .font(.system(size: 13, weight: .bold))
-                    .italic()
-                    .foregroundStyle(brandGradient)
+                BrandingText(fontSize: 13)
                 Text("选择角色")
                     .font(.system(size: 28, weight: .bold))
                 Text("选择你在本项目中扮演的角色以开始协作")

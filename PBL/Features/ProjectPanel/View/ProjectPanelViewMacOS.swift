@@ -99,10 +99,7 @@ struct ProjectPanelViewMacOS: View {
 
             // Branding + user greeting
             VStack(alignment: .leading, spacing: 6) {
-                Text("MAIC-PBL")
-                    .font(.system(size: 18, weight: .bold))
-                    .italic()
-                    .foregroundStyle(brandGradient)
+                BrandingText(fontSize: 18)
 
                 Text(appState.username)
                     .font(.callout.bold())
@@ -345,10 +342,10 @@ struct ProjectPanelViewMacOS: View {
 
         do {
             if appState.isTeacher {
-                teacherProjects = try await api.getProjectsAsTeacher(userId: appState.userId)
+                teacherProjects = try await api.getProjectsAsTeacher()
             } else {
-                async let assignmentsTask = api.getStudentAssignments(userId: appState.userId)
-                async let projectsTask = api.getAllCollaborativeProjects(userId: appState.userId)
+                async let assignmentsTask = api.getStudentAssignments()
+                async let projectsTask = api.getAllCollaborativeProjects()
                 (activeAssignments, availableProjects) = try await (assignmentsTask, projectsTask)
             }
         } catch let err as APIError {
@@ -443,23 +440,10 @@ private struct ProjectRowView: View {
 
     var isSelected: Bool { selectedId == id }
 
-    private static let iconPalette: [Color] = [.blue, .purple, .orange, .indigo, .teal, .pink, .red, .cyan]
-
-    var iconColor: Color {
-        Self.iconPalette[abs(title.hashValue) % Self.iconPalette.count]
-    }
-
     var body: some View {
         HStack(spacing: 14) {
             // Colored monogram icon
-            ZStack {
-                RoundedRectangle(cornerRadius: 9)
-                    .fill(iconColor)
-                    .frame(width: 44, height: 44)
-                Text(String(title.prefix(1)).uppercased())
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.white)
-            }
+            ProjectMonogramView(title: title, size: 44)
 
             // Title + description
             VStack(alignment: .leading, spacing: 3) {
@@ -778,5 +762,144 @@ private struct JoinOpenProjectSheet: View {
             self.error = error.localizedDescription
         }
         joiningId = nil
+    }
+}
+
+// MARK: - Project icon (hash-generated, shared)
+
+/// Generates a unique symmetric pattern icon from the project title, similar to GitHub identicons.
+/// Uses a 5×5 grid mirrored horizontally (only 15 bits needed) for a pleasing symmetric look.
+struct ProjectMonogramView: View {
+    let title: String
+    let size: CGFloat
+
+    private static let gradientPairs: [(Color, Color)] = [
+        (Color(red: 98/255, green: 83/255, blue: 225/255), Color(red: 4/255, green: 190/255, blue: 254/255)),
+        (Color(red: 255/255, green: 111/255, blue: 97/255), Color(red: 255/255, green: 175/255, blue: 64/255)),
+        (Color(red: 0/255, green: 198/255, blue: 168/255), Color(red: 48/255, green: 108/255, blue: 224/255)),
+        (Color(red: 168/255, green: 85/255, blue: 247/255), Color(red: 246/255, green: 97/255, blue: 168/255)),
+        (Color(red: 59/255, green: 130/255, blue: 246/255), Color(red: 16/255, green: 185/255, blue: 129/255)),
+        (Color(red: 236/255, green: 72/255, blue: 153/255), Color(red: 239/255, green: 134/255, blue: 67/255)),
+        (Color(red: 34/255, green: 197/255, blue: 94/255), Color(red: 6/255, green: 182/255, blue: 212/255)),
+        (Color(red: 99/255, green: 102/255, blue: 241/255), Color(red: 168/255, green: 85/255, blue: 247/255)),
+    ]
+
+    /// Deterministic hash (djb2) — stable across app launches.
+    private static func stableHash(_ string: String) -> UInt64 {
+        var hash: UInt64 = 5381
+        for char in string.unicodeScalars {
+            hash = ((hash &<< 5) &+ hash) &+ UInt64(char.value)
+        }
+        return hash
+    }
+
+    private var hashValue_: UInt64 { Self.stableHash(title) }
+
+    private var gradient: LinearGradient {
+        let idx = Int(hashValue_ % UInt64(Self.gradientPairs.count))
+        let pair = Self.gradientPairs[idx]
+        return LinearGradient(colors: [pair.0, pair.1], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
+    /// 5×5 symmetric grid: only the left 3 columns are hashed, right 2 mirror left 2.
+    private var grid: [[Bool]] {
+        let bits = hashValue_ >> 3 // shift past the color bits
+        var result = [[Bool]]()
+        for row in 0..<5 {
+            var line = [Bool]()
+            for col in 0..<3 {
+                let bitIndex = row * 3 + col
+                line.append((bits >> bitIndex) & 1 == 1)
+            }
+            // Mirror: col 3 = col 1, col 4 = col 0
+            line.append(line[1])
+            line.append(line[0])
+            result.append(line)
+        }
+        return result
+    }
+
+    var body: some View {
+        Canvas { context, canvasSize in
+            let corner = size * 0.22
+            let path = RoundedRectangle(cornerRadius: corner).path(in: CGRect(origin: .zero, size: canvasSize))
+            context.clip(to: path)
+
+            // Background
+            context.fill(path, with: .linearGradient(
+                Gradient(colors: [Self.gradientPairs[Int(hashValue_ % UInt64(Self.gradientPairs.count))].0.opacity(0.25),
+                                  Self.gradientPairs[Int(hashValue_ % UInt64(Self.gradientPairs.count))].1.opacity(0.25)]),
+                startPoint: .zero,
+                endPoint: CGPoint(x: canvasSize.width, y: canvasSize.height)
+            ))
+
+            // Pattern cells
+            let padding = size * 0.15
+            let cellSize = (size - padding * 2) / 5
+            let g = grid
+            for row in 0..<5 {
+                for col in 0..<5 {
+                    if g[row][col] {
+                        let rect = CGRect(
+                            x: padding + CGFloat(col) * cellSize,
+                            y: padding + CGFloat(row) * cellSize,
+                            width: cellSize * 0.88,
+                            height: cellSize * 0.88
+                        )
+                        let cellPath = RoundedRectangle(cornerRadius: cellSize * 0.2).path(in: rect)
+                        context.fill(cellPath, with: .linearGradient(
+                            Gradient(colors: [Self.gradientPairs[Int(hashValue_ % UInt64(Self.gradientPairs.count))].0,
+                                              Self.gradientPairs[Int(hashValue_ % UInt64(Self.gradientPairs.count))].1]),
+                            startPoint: .zero,
+                            endPoint: CGPoint(x: canvasSize.width, y: canvasSize.height)
+                        ))
+                    }
+                }
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: size * 0.22))
+    }
+}
+
+// MARK: - Branding text (shared)
+
+struct BrandingText: View {
+    var fontSize: CGFloat = 18
+
+    private var brandGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color(red: 98/255, green: 83/255, blue: 225/255),
+                Color(red: 4/255, green: 190/255, blue: 254/255)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var flameGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color(red: 255/255, green: 200/255, blue: 55/255),
+                Color(red: 255/255, green: 100/255, blue: 50/255),
+                Color(red: 220/255, green: 40/255, blue: 40/255)
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Text("OpenMAIC")
+                .foregroundStyle(brandGradient)
+            Text(" × ")
+                .foregroundStyle(.secondary.opacity(0.6))
+            Text("Pro")
+                .foregroundStyle(flameGradient)
+        }
+        .font(.system(size: fontSize, weight: .bold))
+        .italic()
     }
 }

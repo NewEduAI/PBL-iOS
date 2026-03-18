@@ -18,12 +18,14 @@ func tryLogin(
     }
     let userAPI = UserAPI(baseURL: institution.baseUrl)
     let authResponse = try await userAPI.login(email: email, password: password)
-    let userInfo = try await userAPI.getUserInfo(userId: authResponse.userId)
+    let authedAPI = UserAPI(baseURL: institution.baseUrl, token: authResponse.token)
+    let userInfo = try await authedAPI.getUserInfo()
     appState.saveLoginResult(
         userId: authResponse.userId,
         token: authResponse.token,
         username: userInfo.name,
         email: email,
+        password: password,
         isTeacher: userInfo.is_teacher,
         organization: institution.name,
         organizationBaseUrl: institution.baseUrl
@@ -54,6 +56,7 @@ func tryRegister(
         token: authResponse.token,
         username: name,
         email: email,
+        password: password,
         isTeacher: isTeacher,
         organization: institution.name,
         organizationBaseUrl: institution.baseUrl

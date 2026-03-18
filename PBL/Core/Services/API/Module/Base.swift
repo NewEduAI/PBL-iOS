@@ -40,7 +40,10 @@ struct APIError: Error {
 
 class BaseAPI {
     private let baseURL: String
-    private let token: String
+    private var token: String
+
+    /// Global callback: called on HTTP 401 to silently re-login. Returns the new token or nil.
+    static var tokenRefresher: (() async -> String?)?
 
     init(baseURL: String, token: String = "") {
         self.baseURL = baseURL
@@ -57,8 +60,19 @@ class BaseAPI {
         }
         if let body = body {
             req.httpBody = try JSONEncoder().encode(body)
+        } else if method == .post {
+            // FastAPI requires a JSON body on POST even if no fields are needed.
+            req.httpBody = "{}".data(using: .utf8)
         }
         return req
+    }
+
+    /// If a 401 is received, attempt a silent re-login and retry the request once.
+    private func refreshAndRetry(path: String, method: HTTPMethod, body: Codable?) async -> Bool {
+        guard let refresher = Self.tokenRefresher,
+              let newToken = await refresher() else { return false }
+        token = newToken
+        return true
     }
 
     func request<T: Codable>(
@@ -66,24 +80,37 @@ class BaseAPI {
         method: HTTPMethod,
         body: Codable? = nil
     ) async throws -> T {
-        let urlRequest = try buildRequest(path: path, method: method, body: body)
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        var urlRequest = try buildRequest(path: path, method: method, body: body)
+        var (data, response) = try await URLSession.shared.data(for: urlRequest)
 
         if let rawJSON = String(data: data, encoding: .utf8) {
             print("API Response [\(path)]: \(rawJSON)")
         }
 
-        guard let httpResponse = response as? HTTPURLResponse else {
+        guard var httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
+        }
+
+        // Silent token refresh on 401
+        if httpResponse.statusCode == 401,
+           await refreshAndRetry(path: path, method: method, body: body) {
+            urlRequest = try buildRequest(path: path, method: method, body: body)
+            (data, response) = try await URLSession.shared.data(for: urlRequest)
+            guard let retryResponse = response as? HTTPURLResponse else {
+                throw URLError(.badServerResponse)
+            }
+            httpResponse = retryResponse
         }
 
         let apiResponse = try JSONDecoder().decode(APIResponse<T>.self, from: data)
 
         guard apiResponse.isSuccess else {
+            print("API Error [\(path)]: \(apiResponse.message) (HTTP \(httpResponse.statusCode))")
             throw APIError(message: apiResponse.message, statusCode: httpResponse.statusCode)
         }
 
         guard let responseData = apiResponse.data else {
+            print("API Error [\(path)]: data is nil despite is_success=true. Raw: \(String(data: data, encoding: .utf8) ?? "?")")
             throw APIError(message: "未知网络错误", statusCode: -1)
         }
 
@@ -96,11 +123,21 @@ class BaseAPI {
         method: HTTPMethod,
         body: Codable? = nil
     ) async throws -> T? {
-        let urlRequest = try buildRequest(path: path, method: method, body: body)
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        var urlRequest = try buildRequest(path: path, method: method, body: body)
+        var (data, response) = try await URLSession.shared.data(for: urlRequest)
 
-        guard let httpResponse = response as? HTTPURLResponse else {
+        guard var httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
+        }
+
+        if httpResponse.statusCode == 401,
+           await refreshAndRetry(path: path, method: method, body: body) {
+            urlRequest = try buildRequest(path: path, method: method, body: body)
+            (data, response) = try await URLSession.shared.data(for: urlRequest)
+            guard let retryResponse = response as? HTTPURLResponse else {
+                throw URLError(.badServerResponse)
+            }
+            httpResponse = retryResponse
         }
 
         let apiResponse = try JSONDecoder().decode(APIResponse<T>.self, from: data)
@@ -109,7 +146,7 @@ class BaseAPI {
             throw APIError(message: apiResponse.message, statusCode: httpResponse.statusCode)
         }
 
-        return apiResponse.data  // nil when the server returns null — caller treats as "none"
+        return apiResponse.data
     }
 
     /// For endpoints that return no data (void), only checks `is_success`.
@@ -118,8 +155,15 @@ class BaseAPI {
         method: HTTPMethod,
         body: Codable? = nil
     ) async throws {
-        let urlRequest = try buildRequest(path: path, method: method, body: body)
-        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        var urlRequest = try buildRequest(path: path, method: method, body: body)
+        var (data, response) = try await URLSession.shared.data(for: urlRequest)
+
+        if let httpResponse = response as? HTTPURLResponse,
+           httpResponse.statusCode == 401,
+           await refreshAndRetry(path: path, method: method, body: body) {
+            urlRequest = try buildRequest(path: path, method: method, body: body)
+            (data, _) = try await URLSession.shared.data(for: urlRequest)
+        }
 
         struct Bare: Codable {
             let isSuccess: Bool

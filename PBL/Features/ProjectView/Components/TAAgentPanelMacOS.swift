@@ -42,21 +42,17 @@ final class TAAgentWebSocketService {
     private var receiveTask: Task<Void, Never>?
     private var heartbeatTask: Task<Void, Never>?
 
-    func connect(baseURL: String, token: String, projectId: String, userId: String) {
+    func connect(baseURL: String, token: String, projectId: String) {
         disconnect()
 
         let wsBase = baseURL
             .replacingOccurrences(of: "https://", with: "wss://")
             .replacingOccurrences(of: "http://", with: "ws://")
-        let urlString = "\(wsBase)/project/agent/ws?project_id=\(projectId)&user_id=\(userId)"
+        let encodedToken = token.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? token
+        let urlString = "\(wsBase)/project/agent/ws?project_id=\(projectId)&token=\(encodedToken)"
         guard let url = URL(string: urlString) else { return }
 
-        var request = URLRequest(url: url)
-        if !token.isEmpty {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-
-        wsTask = URLSession.shared.webSocketTask(with: request)
+        wsTask = URLSession.shared.webSocketTask(with: url)
         wsTask?.resume()
         isConnected = true
         startReceiving()
@@ -253,8 +249,7 @@ struct TAAgentPanelMacOS: View {
                 service.connect(
                     baseURL: appState.organizationBaseUrl,
                     token: appState.token,
-                    projectId: projectId,
-                    userId: appState.userId
+                    projectId: projectId
                 )
             }
         }
@@ -393,7 +388,8 @@ private struct TAMessageBubble: View {
                     .padding(6)
                     .background(Color(NSColor.controlBackgroundColor))
                     .clipShape(Circle())
-                Text((try? AttributedString(markdown: message.content.replacingOccurrences(of: "\n", with: "\n\n")))
+                Text((try? AttributedString(markdown: message.content
+                    .replacingOccurrences(of: "\n", with: "\n\n")))
                      ?? AttributedString(message.content))
                     .font(.callout)
                     .foregroundStyle(.primary)

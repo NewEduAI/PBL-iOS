@@ -36,6 +36,7 @@ struct ProjectViewMacOS: View {
     let windowKey: String
 
     @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
 
     // Parsed IDs
     var projectId: String { windowKey.components(separatedBy: "|").first ?? windowKey }
@@ -135,7 +136,13 @@ struct ProjectViewMacOS: View {
             }
         }
         .ignoresSafeArea()
-        .task { await loadAll() }
+        .task {
+            if appState.token.isEmpty { dismiss(); return }
+            await loadAll()
+        }
+        .onChange(of: appState.token) { _, token in
+            if token.isEmpty { dismiss() }
+        }
     }
 
     // MARK: - Sidebar
@@ -145,10 +152,7 @@ struct ProjectViewMacOS: View {
 
             // MAIC-PBL branding + collapse button
             HStack {
-                Text("MAIC-PBL")
-                    .font(.system(size: 13, weight: .bold))
-                    .italic()
-                    .foregroundStyle(brandGradient)
+                BrandingText(fontSize: 13)
 //                Spacer()
 //                Button {
 //                    withAnimation(.easeInOut(duration: 0.2)) { sidebarVisible = false }
@@ -381,16 +385,7 @@ struct ProjectViewMacOS: View {
 
     @ViewBuilder
     func projectMonogram(title: String, size: CGFloat) -> some View {
-        let palette: [Color] = [.blue, .purple, .orange, .indigo, .teal, .pink, .red, .cyan]
-        let color = palette[abs(title.hashValue) % palette.count]
-        ZStack {
-            RoundedRectangle(cornerRadius: size * 0.2)
-                .fill(color)
-                .frame(width: size, height: size)
-            Text(String(title.prefix(1)).uppercased())
-                .font(.system(size: size * 0.45, weight: .bold))
-                .foregroundStyle(.white)
-        }
+        ProjectMonogramView(title: title, size: size)
     }
 
     @ViewBuilder

@@ -23,28 +23,36 @@ struct RegisterRequest: Codable {
     let is_teacher: Bool
 }
 
-// MARK: - Auth Response (both login and register return a userId string)
+// MARK: - Auth Response
+// Handles both new format { user_id, token } and legacy format (plain userId string).
 
 struct AuthResponse: Codable {
     let userId: String
     let token: String
 
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case token
+    }
+
     init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        self.userId = try container.decode(String.self)
-        self.token = self.userId
+        // Try new keyed format first: { "user_id": "...", "token": "..." }
+        if let container = try? decoder.container(keyedBy: CodingKeys.self),
+           let uid = try? container.decode(String.self, forKey: .userId),
+           let tok = try? container.decode(String.self, forKey: .token) {
+            self.userId = uid
+            self.token = tok
+        } else {
+            // Legacy: data is just a plain userId string (token = userId for now)
+            let container = try decoder.singleValueContainer()
+            let uid = try container.decode(String.self)
+            self.userId = uid
+            self.token = uid
+        }
     }
 }
 
 // MARK: - User Info
-
-struct GetUserInfoRequest: Codable {
-    let userId: String
-
-    enum CodingKeys: String, CodingKey {
-        case userId = "user_id"
-    }
-}
 
 struct UserInfoResponse: Codable {
     let name: String
@@ -77,11 +85,10 @@ class UserAPI: BaseAPI {
         return response
     }
 
-    func getUserInfo(userId: String) async throws -> UserInfoResponse {
+    func getUserInfo() async throws -> UserInfoResponse {
         let response: UserInfoResponse = try await self.request(
             path: self.prefix + "/info",
-            method: .post,
-            body: GetUserInfoRequest(userId: userId)
+            method: .post
         )
         return response
     }

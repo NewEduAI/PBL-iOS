@@ -37,6 +37,7 @@ struct TemplateIssue: Codable, Identifiable {
     let personInCharge: String
     let participants: [String]
     let isDone: Bool
+    let notes: String?
     let parentIssue: String?
     var children: [TemplateIssue]?
 
@@ -44,7 +45,7 @@ struct TemplateIssue: Codable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case issueId = "issue_id"
-        case title, description, participants
+        case title, description, participants, notes
         case detailedDescription = "detailed_description"
         case personInCharge = "person_in_charge"
         case isDone = "is_done"

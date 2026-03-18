@@ -48,17 +48,7 @@ struct LoginViewMacOS: View {
 
                 // Left panel — branding with background image
                 VStack(spacing: 16) {
-                    Text("MAIC-PBL")
-                        .italic()
-                        .font(.system(size: 64, weight: .bold))
-                        .foregroundStyle(LinearGradient(
-                            colors: [
-                                Color(red: 98/255, green: 83/255, blue: 225/255),
-                                Color(red: 4/255, green: 190/255, blue: 254/255)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ))
+                    BrandingText(fontSize: 64)
                     Text("子曰：知而不行，与不知同。")
                         .font(.system(size: 20))
                         .foregroundStyle(Color(red: 55/255, green: 65/255, blue: 81/255))

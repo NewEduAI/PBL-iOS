@@ -127,22 +127,18 @@ final class ChatWebSocketService {
         self.currentUserId = currentUserId
     }
 
-    func connect(groupId: String, userId: String, sessionId: String) {
+    func connect(groupId: String, sessionId: String) {
         currentSessionId = sessionId
         disconnect()
 
         let wsBase = baseURL
             .replacingOccurrences(of: "https://", with: "wss://")
             .replacingOccurrences(of: "http://", with: "ws://")
-        let urlString = "\(wsBase)/group/chat/ws?group_id=\(groupId)&user_id=\(userId)"
+        let encodedToken = token.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? token
+        let urlString = "\(wsBase)/group/chat/ws?group_id=\(groupId)&token=\(encodedToken)"
         guard let url = URL(string: urlString) else { return }
 
-        var request = URLRequest(url: url)
-        if !token.isEmpty {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-
-        wsTask = URLSession.shared.webSocketTask(with: request)
+        wsTask = URLSession.shared.webSocketTask(with: url)
         wsTask?.resume()
         isConnected = true
         startReceiving()

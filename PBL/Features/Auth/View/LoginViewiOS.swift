@@ -23,9 +23,7 @@ struct LoginViewiOS: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("MAIC-PBL")
-                .font(.largeTitle)
-                .bold()
+            BrandingText(fontSize: 34)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("子曰：知而不行，与不知同。")

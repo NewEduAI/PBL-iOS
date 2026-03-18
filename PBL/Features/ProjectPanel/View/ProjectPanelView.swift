@@ -86,8 +86,8 @@ struct ProjectPanelViewiOS: View {
         errorMessage = nil
 
         do {
-            let projectAPI = StudentProjectAPI(baseURL: appState.organizationBaseUrl)
-            assignments = try await projectAPI.getStudentAssignments(userId: appState.userId)
+            let projectAPI = StudentProjectAPI(baseURL: appState.organizationBaseUrl, token: appState.token)
+            assignments = try await projectAPI.getStudentAssignments()
         } catch {
             errorMessage = error.localizedDescription
         }

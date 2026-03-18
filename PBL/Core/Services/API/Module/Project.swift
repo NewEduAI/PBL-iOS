@@ -170,20 +170,18 @@ class ProjectAPI: BaseAPI {
     // MARK: Student — group-based
 
     /// Active assignments the student is enrolled in.
-    func getStudentAssignments(userId: String) async throws -> [StudentAssignment] {
+    func getStudentAssignments() async throws -> [StudentAssignment] {
         try await request(
             path: "/group/user/get_student_assignments",
-            method: .post,
-            body: UserIdRequest(userId: userId)
+            method: .post
         )
     }
 
     /// All collaborative projects available to browse / join.
-    func getAllCollaborativeProjects(userId: String) async throws -> [Project] {
+    func getAllCollaborativeProjects() async throws -> [Project] {
         try await request(
             path: "/project/all_collaborative_projects",
-            method: .post,
-            body: UserIdRequest(userId: userId)
+            method: .post
         )
     }
 
@@ -227,11 +225,10 @@ class ProjectAPI: BaseAPI {
     // MARK: Teacher
 
     /// All collaborative projects created by a teacher.
-    func getProjectsAsTeacher(userId: String) async throws -> [Project] {
+    func getProjectsAsTeacher() async throws -> [Project] {
         try await request(
             path: "/project/get_collaborative_projects",
-            method: .post,
-            body: UserIdRequest(userId: userId)
+            method: .post
         )
     }
 

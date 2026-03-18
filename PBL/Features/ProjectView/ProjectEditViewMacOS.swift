@@ -35,6 +35,7 @@ struct ProjectEditViewMacOS: View {
     let projectId: String
 
     @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
 
     @State private var project: Project? = nil
     @State private var isLoading = true
@@ -84,10 +85,16 @@ struct ProjectEditViewMacOS: View {
             }
         }
         .ignoresSafeArea()
-        .task { await loadProject() }
+        .task {
+            if appState.token.isEmpty { dismiss(); return }
+            await loadProject()
+        }
         .onDisappear { taService.disconnect() }
         .onChange(of: taService.lastAction) { _, action in
             handleTAAction(action)
+        }
+        .onChange(of: appState.token) { _, token in
+            if token.isEmpty { dismiss() }
         }
     }
 
@@ -97,10 +104,7 @@ struct ProjectEditViewMacOS: View {
         VStack(alignment: .leading, spacing: 0) {
 
             // Branding
-            Text("MAIC-PBL")
-                .font(.system(size: 13, weight: .bold))
-                .italic()
-                .foregroundStyle(brandGradient)
+            BrandingText(fontSize: 13)
                 .padding(.horizontal, 16)
                 .padding(.top, 40)
                 .padding(.bottom, 12)
@@ -236,20 +240,7 @@ struct ProjectEditViewMacOS: View {
 
     @ViewBuilder
     func projectMonogram(title: String, size: CGFloat) -> some View {
-        let colors: [Color] = [.blue, .purple, .orange, .indigo, .teal, .pink, .red, .cyan]
-        let colorIndex = abs(title.hashValue) % colors.count
-        let initials = title.split(separator: " ").prefix(2)
-            .compactMap { $0.first.map(String.init) }.joined()
-        let display = initials.isEmpty ? String(title.prefix(1)) : initials
-
-        ZStack {
-            RoundedRectangle(cornerRadius: size * 0.22)
-                .fill(colors[colorIndex].gradient)
-            Text(display)
-                .font(.system(size: size * 0.42, weight: .bold))
-                .foregroundStyle(.white)
-        }
-        .frame(width: size, height: size)
+        ProjectMonogramView(title: title, size: size)
     }
 
     // MARK: - Actions

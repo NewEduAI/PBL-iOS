@@ -59,15 +59,6 @@ private struct GroupUserRequest: Codable {
     }
 }
 
-private struct GetIssueBoardIdRequest: Codable {
-    let groupId: String
-    let userId: String
-    enum CodingKeys: String, CodingKey {
-        case groupId = "group_id"
-        case userId = "user_id"
-    }
-}
-
 private struct UpdateIssueRequest: Codable {
     let issueBoardId: String
     let groupId: String
@@ -105,7 +96,7 @@ class IssueAPI: BaseAPI {
         try await request(
             path: "/group/issueboard/get_issueboard_id",
             method: .post,
-            body: GetIssueBoardIdRequest(groupId: groupId, userId: userId)
+            body: GroupUserRequest(groupId: groupId, userId: userId)
         )
     }
 

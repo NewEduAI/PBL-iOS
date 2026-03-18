@@ -450,7 +450,7 @@ struct ChatPanelMacOS: View {
                 currentUserId: appState.userId
             )
             wsService = ws
-            ws.connect(groupId: groupId, userId: appState.userId, sessionId: session.id)
+            ws.connect(groupId: groupId, sessionId: session.id)
         }
     }
 

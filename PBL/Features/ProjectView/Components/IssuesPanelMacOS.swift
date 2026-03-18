@@ -125,9 +125,9 @@ struct IssuesPanelMacOS: View {
                             IssueRow(
                                 issue: issue,
                                 depth: 0,
-                                isSelected: selectedIssue?.id == issue.id,
-                                onSelect: { selectedIssue = issue },
-                                onDelete: { deleteIssue(issue) }
+                                selectedIssueId: selectedIssue?.id,
+                                onSelect: { selectedIssue = $0 },
+                                onDelete: { deleteIssue($0) }
                             )
                         }
                     }
@@ -246,7 +246,8 @@ struct IssuesPanelMacOS: View {
             copy = TemplateIssue(
                 issueId: copy.issueId, title: copy.title, description: copy.description,
                 detailedDescription: copy.detailedDescription, personInCharge: copy.personInCharge,
-                participants: copy.participants, isDone: copy.isDone, parentIssue: copy.parentIssue,
+                participants: copy.participants, isDone: copy.isDone, notes: copy.notes,
+                parentIssue: copy.parentIssue,
                 children: copy.children.map { removeIssue(id, from: $0) }
             )
             return copy
@@ -259,7 +260,8 @@ struct IssuesPanelMacOS: View {
             return TemplateIssue(
                 issueId: issue.issueId, title: issue.title, description: issue.description,
                 detailedDescription: issue.detailedDescription, personInCharge: issue.personInCharge,
-                participants: issue.participants, isDone: issue.isDone, parentIssue: issue.parentIssue,
+                participants: issue.participants, isDone: issue.isDone, notes: issue.notes,
+                parentIssue: issue.parentIssue,
                 children: issue.children.map { replaceIssue(updated, in: $0) }
             )
         }
@@ -273,14 +275,15 @@ struct IssuesPanelMacOS: View {
                 return TemplateIssue(
                     issueId: issue.issueId, title: issue.title, description: issue.description,
                     detailedDescription: issue.detailedDescription, personInCharge: issue.personInCharge,
-                    participants: issue.participants, isDone: issue.isDone, parentIssue: issue.parentIssue,
-                    children: children
+                    participants: issue.participants, isDone: issue.isDone, notes: issue.notes,
+                    parentIssue: issue.parentIssue, children: children
                 )
             }
             return TemplateIssue(
                 issueId: issue.issueId, title: issue.title, description: issue.description,
                 detailedDescription: issue.detailedDescription, personInCharge: issue.personInCharge,
-                participants: issue.participants, isDone: issue.isDone, parentIssue: issue.parentIssue,
+                participants: issue.participants, isDone: issue.isDone, notes: issue.notes,
+                parentIssue: issue.parentIssue,
                 children: issue.children.map { appendChild(child, parentId: parentId, in: $0) }
             )
         }
@@ -292,11 +295,13 @@ struct IssuesPanelMacOS: View {
 private struct IssueRow: View {
     let issue: TemplateIssue
     let depth: Int
-    let isSelected: Bool
-    let onSelect: () -> Void
-    let onDelete: () -> Void
+    let selectedIssueId: String?
+    let onSelect: (TemplateIssue) -> Void
+    let onDelete: (TemplateIssue) -> Void
 
     @State private var isHovered = false
+
+    private var isSelected: Bool { selectedIssueId == issue.id }
 
     var body: some View {
         VStack(spacing: 1) {
@@ -320,7 +325,7 @@ private struct IssueRow: View {
                 Spacer()
 
                 if isHovered {
-                    Button { onDelete() } label: {
+                    Button { onDelete(issue) } label: {
                         Image(systemName: "trash")
                             .font(.system(size: 11))
                             .foregroundStyle(.red.opacity(0.8))
@@ -336,7 +341,7 @@ private struct IssueRow: View {
             )
             .contentShape(Rectangle())
             .onHover { isHovered = $0 }
-            .onTapGesture { onSelect() }
+            .onTapGesture { onSelect(issue) }
             .padding(.horizontal, 6)
 
             // Children
@@ -345,7 +350,7 @@ private struct IssueRow: View {
                     IssueRow(
                         issue: child,
                         depth: depth + 1,
-                        isSelected: isSelected && false,
+                        selectedIssueId: selectedIssueId,
                         onSelect: onSelect,
                         onDelete: onDelete
                     )
@@ -365,9 +370,14 @@ private struct IssueDetailView: View {
 
     @State private var title = ""
     @State private var description = ""
+    @State private var detailedDescription = ""
+    @State private var notes = ""
     @State private var personInCharge = ""
     @State private var participants: Set<String> = []
     @State private var showAddChild = false
+    /// Which text field is currently being edited (nil = all show markdown)
+    @State private var editingField: String? = nil
+    @FocusState private var focusedField: String?
 
     private var brandGradient: LinearGradient {
         LinearGradient(
@@ -380,9 +390,16 @@ private struct IssueDetailView: View {
         )
     }
 
+    /// Agents available as participants (excludes the current assignee)
+    var availableParticipants: [ProjectAgent] {
+        agents.filter { $0.name != personInCharge }
+    }
+
     var hasChanges: Bool {
         title != issue.title
             || description != (issue.description ?? "")
+            || detailedDescription != (issue.detailedDescription ?? "")
+            || notes != (issue.notes ?? "")
             || personInCharge != issue.personInCharge
             || participants != Set(issue.participants)
     }
@@ -411,12 +428,7 @@ private struct IssueDetailView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Title
                     fieldGroup(label: "标题") {
-                        TextField("任务标题", text: $title)
-                            .textFieldStyle(.plain)
-                            .font(.callout)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(inputBackground)
+                        markdownField(text: $title, field: "title", placeholder: "任务标题", minHeight: 28)
                     }
 
                     // Assignee
@@ -430,15 +442,15 @@ private struct IssueDetailView: View {
                         .labelsHidden()
                     }
 
-                    // Participants
+                    // Participants (excluding assignee)
                     fieldGroup(label: "参与者") {
-                        if agents.isEmpty {
-                            Text("暂无智能体")
+                        if availableParticipants.isEmpty {
+                            Text("暂无可选智能体")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         } else {
                             FlowLayout(spacing: 8) {
-                                ForEach(agents) { agent in
+                                ForEach(availableParticipants) { agent in
                                     let isOn = participants.contains(agent.name)
                                     Button {
                                         if isOn { participants.remove(agent.name) }
@@ -468,12 +480,17 @@ private struct IssueDetailView: View {
 
                     // Description
                     fieldGroup(label: "描述") {
-                        TextEditor(text: $description)
-                            .font(.callout)
-                            .scrollContentBackground(.hidden)
-                            .frame(minHeight: 80)
-                            .padding(10)
-                            .background(inputBackground)
+                        markdownField(text: $description, field: "description", placeholder: "描述", minHeight: 80)
+                    }
+
+                    // Detailed description
+                    fieldGroup(label: "详细描述") {
+                        markdownField(text: $detailedDescription, field: "detailedDescription", placeholder: "详细描述", minHeight: 120)
+                    }
+
+                    // Notes
+                    fieldGroup(label: "备注") {
+                        markdownField(text: $notes, field: "notes", placeholder: "备注", minHeight: 80)
                     }
                 }
                 .padding(20)
@@ -509,11 +526,53 @@ private struct IssueDetailView: View {
         }
         .onAppear { loadValues() }
         .onChange(of: issue.id) { loadValues() }
+        .onChange(of: focusedField) { _, newValue in
+            if newValue == nil { editingField = nil }
+        }
         .sheet(isPresented: $showAddChild) {
             AddIssueSheet(agents: agents, parentId: issue.issueId) { child in
                 onAddChild(child)
             }
         }
+    }
+
+    // MARK: - Markdown / raw toggle field
+
+    /// Shows rendered markdown by default; switches to raw TextEditor on click.
+    @ViewBuilder
+    func markdownField(text: Binding<String>, field: String, placeholder: String, minHeight: CGFloat) -> some View {
+        if editingField == field {
+            TextEditor(text: text)
+                .font(.callout)
+                .scrollContentBackground(.hidden)
+                .frame(minHeight: minHeight)
+                .padding(10)
+                .background(inputBackground)
+                .focused($focusedField, equals: field)
+                .onAppear { focusedField = field }
+        } else {
+            Group {
+                if text.wrappedValue.isEmpty {
+                    Text(placeholder)
+                        .font(.callout)
+                        .foregroundStyle(.tertiary)
+                } else {
+                    Text(markdownAttributed(text.wrappedValue))
+                        .font(.callout)
+                        .textSelection(.disabled)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .topLeading)
+            .padding(10)
+            .background(inputBackground)
+            .contentShape(Rectangle())
+            .onTapGesture { editingField = field }
+        }
+    }
+
+    func markdownAttributed(_ source: String) -> AttributedString {
+        let normalized = source.replacingOccurrences(of: "\n", with: "\n\n")
+        return (try? AttributedString(markdown: normalized)) ?? AttributedString(source)
     }
 
     var inputBackground: some View {
@@ -536,8 +595,11 @@ private struct IssueDetailView: View {
     func loadValues() {
         title = issue.title
         description = issue.description ?? ""
+        detailedDescription = issue.detailedDescription ?? ""
+        notes = issue.notes ?? ""
         personInCharge = issue.personInCharge
         participants = Set(issue.participants)
+        editingField = nil
     }
 
     func saveChanges() {
@@ -545,10 +607,11 @@ private struct IssueDetailView: View {
             issueId: issue.issueId,
             title: title,
             description: description.isEmpty ? nil : description,
-            detailedDescription: issue.detailedDescription,
+            detailedDescription: detailedDescription.isEmpty ? nil : detailedDescription,
             personInCharge: personInCharge,
             participants: Array(participants),
             isDone: issue.isDone,
+            notes: notes.isEmpty ? nil : notes,
             parentIssue: issue.parentIssue,
             children: issue.children
         )
@@ -611,13 +674,14 @@ struct AddIssueSheet: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("参与者").font(.callout.bold())
-                if agents.isEmpty {
-                    Text("暂无智能体")
+                let available = agents.filter { $0.name != personInCharge }
+                if available.isEmpty {
+                    Text("暂无可选智能体")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
                     FlowLayout(spacing: 8) {
-                        ForEach(agents) { agent in
+                        ForEach(available) { agent in
                             let isOn = participants.contains(agent.name)
                             Button {
                                 if isOn { participants.remove(agent.name) }
@@ -673,6 +737,7 @@ struct AddIssueSheet: View {
                         personInCharge: personInCharge,
                         participants: Array(participants),
                         isDone: false,
+                        notes: nil,
                         parentIssue: parentId,
                         children: nil
                     )
