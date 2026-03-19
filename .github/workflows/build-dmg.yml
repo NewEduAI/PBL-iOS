@@ -81,23 +81,39 @@ jobs:
             --notes "**${{ steps.tag.outputs.version }}** (${{ steps.tag.outputs.short_sha }}): ${COMMIT_MSG}" \
             --latest
 
-      - name: Generate appcast.xml
+      - name: Get commit messages since last tag
+        id: changes
+        run: |
+          git fetch --tags
+          LATEST=$(git tag -l 'v*' --sort=-v:refname | head -1)
+          if [ -z "$LATEST" ]; then
+            NOTES=$(git log --pretty=format:"• %s" -10)
+          else
+            NOTES=$(git log --pretty=format:"• %s" "${LATEST}..HEAD")
+          fi
+          # Escape for XML
+          NOTES=$(echo "$NOTES" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+          # Store multiline output
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "notes<<$EOF" >> "$GITHUB_OUTPUT"
+          echo "$NOTES" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Generate appcast item
         run: |
           VERSION="${{ steps.tag.outputs.version }}"
           SHORT_VERSION="${VERSION#v}"
           SIGNATURE="${{ steps.sign.outputs.signature }}"
           LENGTH="${{ steps.sign.outputs.length }}"
           DMG_URL="https://github.com/NewEduAI/PBL-iOS/releases/download/${VERSION}/PBLZone.dmg"
+          NOTES="${{ steps.changes.outputs.notes }}"
 
+          # Build the new <item> block
           mkdir -p docs
-          cat > docs/appcast.xml << APPCAST_EOF
-          <?xml version="1.0" encoding="utf-8"?>
-          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
-            <channel>
-              <title>PBL Zone Updates</title>
-              <language>en</language>
+          cat > /tmp/new_item.xml << ITEM_EOF
               <item>
                 <title>${SHORT_VERSION}</title>
+                <description><![CDATA[${NOTES}]]></description>
                 <sparkle:version>${SHORT_VERSION}</sparkle:version>
                 <sparkle:shortVersionString>${SHORT_VERSION}</sparkle:shortVersionString>
                 <pubDate>$(date -R)</pubDate>
@@ -108,9 +124,7 @@ jobs:
                   type="application/octet-stream"
                 />
               </item>
-            </channel>
-          </rss>
-          APPCAST_EOF
+          ITEM_EOF
 
       - name: Deploy appcast to GitHub Pages
         env:
@@ -119,18 +133,39 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Create or update gh-pages branch
           if git rev-parse --verify origin/gh-pages >/dev/null 2>&1; then
             git checkout gh-pages
-            cp docs/appcast.xml appcast.xml
-            git add appcast.xml
-            git commit -m "Update appcast for ${{ steps.tag.outputs.version }}" || true
-            git push origin gh-pages
+            # Insert new item before </channel>, keeping all previous items
+            if [ -f appcast.xml ]; then
+              sed -i '' '/<\/channel>/r /tmp/new_item.xml' appcast.xml
+            else
+              # Shouldn't happen, but create fresh if missing
+              cat > appcast.xml << 'HEADER'
+          <?xml version="1.0" encoding="utf-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+            <channel>
+              <title>PBL Zone Updates</title>
+              <language>en</language>
+            </channel>
+          </rss>
+          HEADER
+              sed -i '' '/<\/channel>/r /tmp/new_item.xml' appcast.xml
+            fi
           else
             git checkout --orphan gh-pages
             git rm -rf . 2>/dev/null || true
-            cp docs/appcast.xml appcast.xml
-            git add appcast.xml
-            git commit -m "Initial appcast for ${{ steps.tag.outputs.version }}"
-            git push origin gh-pages
+            cat > appcast.xml << 'HEADER'
+          <?xml version="1.0" encoding="utf-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+            <channel>
+              <title>PBL Zone Updates</title>
+              <language>en</language>
+            </channel>
+          </rss>
+          HEADER
+            sed -i '' '/<\/channel>/r /tmp/new_item.xml' appcast.xml
           fi
+
+          git add appcast.xml
+          git commit -m "Update appcast for ${{ steps.tag.outputs.version }}" || true
+          git push origin gh-pages
