@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>PBL Zone Updates</title>
+    <language>en</language>
+    <item>
+      <title>1.0.2</title>
+      <sparkle:version>1.0.2</sparkle:version>
+      <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
+      <pubDate>Thu, 19 Mar 2026 03:28:45 +0000</pubDate>
+      <enclosure
+        url="https://github.com/NewEduAI/PBL-iOS/releases/download/v1.0.2/PBLZone.dmg"
+        sparkle:edSignature="7TPr7Dg2trTxKQjs+YeS7H4DYe7h0PzO2qipACkt2qy6DgVZIJlr6yQVkTh8EeG2V2q4LFOojqRmYKtg42bZDw=="
+        length="7689835"
+        type="application/octet-stream"
+      />
+    </item>
+  </channel>
+</rss>
