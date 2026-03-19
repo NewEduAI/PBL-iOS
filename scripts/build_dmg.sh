@@ -7,6 +7,14 @@ SCHEME="PBL Zone"
 BUILD_DIR="${PROJECT_DIR}/build"
 OUT_DMG="${PROJECT_DIR}/build/PBLZone.dmg"
 UNLOCK_SCRIPT="${PROJECT_DIR}/scripts/unlock_quarantine.command"
+# Version: pass as first argument (e.g. ./build_dmg.sh 1.0.3), defaults to git tag
+APP_VERSION="${1:-}"
+if [ -z "$APP_VERSION" ]; then
+    LATEST_TAG=$(git -C "$PROJECT_DIR" tag -l 'v*' --sort=-v:refname 2>/dev/null | head -1)
+    APP_VERSION="${LATEST_TAG#v}"
+    [ -z "$APP_VERSION" ] && APP_VERSION="1.0.0"
+fi
+echo "📌  Version: ${APP_VERSION}"
 
 # ── Clean previous build ────────────────────────────────────────────────
 echo "🧹  Cleaning previous build..."
@@ -24,6 +32,8 @@ xcodebuild \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
   MACOSX_DEPLOYMENT_TARGET=14.6 \
+  MARKETING_VERSION="${APP_VERSION}" \
+  CURRENT_PROJECT_VERSION="${APP_VERSION}" \
   build \
   2>&1 | tail -5
 

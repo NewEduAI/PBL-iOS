@@ -30,15 +30,6 @@ jobs:
       - name: Resolve SPM dependencies
         run: xcodebuild -project PBL.xcodeproj -scheme "PBL Zone" -resolvePackageDependencies
 
-      - name: Download Sparkle tools
-        run: |
-          curl -L -o /tmp/Sparkle.tar.xz "https://github.com/sparkle-project/Sparkle/releases/download/2.9.0/Sparkle-2.9.0.tar.xz"
-          mkdir -p /tmp/sparkle
-          tar xf /tmp/Sparkle.tar.xz -C /tmp/sparkle
-
-      - name: Build DMG
-        run: ./scripts/build_dmg.sh
-
       - name: Generate next version tag
         id: tag
         run: |
@@ -53,6 +44,17 @@ jobs:
           echo "version=$NEXT" >> "$GITHUB_OUTPUT"
           echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
           echo "Next version: $NEXT"
+
+      - name: Download Sparkle tools
+        run: |
+          curl -L -o /tmp/Sparkle.tar.xz "https://github.com/sparkle-project/Sparkle/releases/download/2.9.0/Sparkle-2.9.0.tar.xz"
+          mkdir -p /tmp/sparkle
+          tar xf /tmp/Sparkle.tar.xz -C /tmp/sparkle
+
+      - name: Build DMG
+        run: |
+          SHORT_VERSION="${{ steps.tag.outputs.version }}"
+          ./scripts/build_dmg.sh "${SHORT_VERSION#v}"
 
       - name: Sign DMG with Sparkle key
         id: sign
