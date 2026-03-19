@@ -6,9 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		CAC3ABBB2F6BA0CB00462878 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = CAC3ABBA2F6BA0CB00462878 /* Sparkle */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		CA6977F62F4ED5EA0028AD05 /* PBL Zone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PBL Zone.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CABE717A2F20722E001E36B6 /* PBL.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PBL.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CAC3ABBC2F6BA14500462878 /* PBL-Zone-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "PBL-Zone-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -89,6 +94,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CAC3ABBB2F6BA0CB00462878 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -105,6 +111,7 @@
 		CABE71712F20722E001E36B6 = {
 			isa = PBXGroup;
 			children = (
+				CAC3ABBC2F6BA14500462878 /* PBL-Zone-Info.plist */,
 				CABE717C2F20722E001E36B6 /* PBL */,
 				CABE717B2F20722E001E36B6 /* Products */,
 			);
@@ -136,6 +143,7 @@
 			);
 			name = "PBL Zone";
 			packageProductDependencies = (
+				CAC3ABBA2F6BA0CB00462878 /* Sparkle */,
 			);
 			productName = "PBL Zone";
 			productReference = CA6977F62F4ED5EA0028AD05 /* PBL Zone.app */;
@@ -190,6 +198,9 @@
 			);
 			mainGroup = CABE71712F20722E001E36B6;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				CAC3ABB92F6BA0CB00462878 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CABE717B2F20722E001E36B6 /* Products */;
 			projectDirPath = "";
@@ -260,6 +271,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "PBL-Zone-Info.plist";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -294,6 +306,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "PBL-Zone-Info.plist";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -550,6 +563,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		CAC3ABB92F6BA0CB00462878 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		CAC3ABBA2F6BA0CB00462878 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CAC3ABB92F6BA0CB00462878 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CABE71722F20722E001E36B6 /* Project object */;
 }

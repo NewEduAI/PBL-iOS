@@ -23,6 +23,7 @@ xcodebuild \
   CODE_SIGN_IDENTITY="-" \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
+  MACOSX_DEPLOYMENT_TARGET=14.6 \
   build \
   2>&1 | tail -5
 
