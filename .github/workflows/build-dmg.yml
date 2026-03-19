@@ -96,72 +96,36 @@ jobs:
           echo "$COMMITS" >> "$GITHUB_OUTPUT"
           echo "$EOF" >> "$GITHUB_OUTPUT"
 
-      - name: Generate release notes HTML and appcast item
+      - name: Generate release notes and appcast item
         run: |
           VERSION="${{ steps.tag.outputs.version }}"
           SHORT_VERSION="${VERSION#v}"
           SIGNATURE="${{ steps.sign.outputs.signature }}"
           LENGTH="${{ steps.sign.outputs.length }}"
           DMG_URL="https://github.com/NewEduAI/PBL-iOS/releases/download/${VERSION}/PBLZone.dmg"
-          NOTES_URL="https://neweduai.github.io/PBL-iOS/notes/${SHORT_VERSION}.html"
           PUB_DATE="$(date -R)"
 
-          # Generate styled HTML release notes for this version
-          mkdir -p /tmp/release-notes
-          cat > /tmp/release-notes/${SHORT_VERSION}.html << 'STYLE_EOF'
-          <html>
-          <head>
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-              padding: 16px 20px;
-              color: #1d1d1f;
-              background: #fff;
-              line-height: 1.6;
-            }
-            h2 {
-              font-size: 18px;
-              font-weight: 600;
-              margin: 0 0 4px 0;
-              color: #1d1d1f;
-            }
-            .date {
-              font-size: 12px;
-              color: #86868b;
-              margin-bottom: 12px;
-            }
-            ul {
-              padding-left: 20px;
-              margin: 0;
-            }
-            li {
-              font-size: 13px;
-              margin-bottom: 6px;
-              color: #333;
-            }
-          </style>
-          </head>
-          <body>
-          STYLE_EOF
-
-          echo "<h2>Version ${SHORT_VERSION}</h2>" >> /tmp/release-notes/${SHORT_VERSION}.html
-          echo "<div class=\"date\">${PUB_DATE}</div>" >> /tmp/release-notes/${SHORT_VERSION}.html
-          echo "<ul>" >> /tmp/release-notes/${SHORT_VERSION}.html
+          # Save this version's notes as a JSON entry for the combined changelog
+          mkdir -p /tmp/release-data
+          COMMITS_HTML=""
           while IFS= read -r line; do
             [ -z "$line" ] && continue
             ESCAPED=$(echo "$line" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
-            echo "  <li>${ESCAPED}</li>" >> /tmp/release-notes/${SHORT_VERSION}.html
+            COMMITS_HTML="${COMMITS_HTML}<li>${ESCAPED}</li>"
           done <<< "${{ steps.changes.outputs.commits }}"
-          echo "</ul>" >> /tmp/release-notes/${SHORT_VERSION}.html
-          echo "</body></html>" >> /tmp/release-notes/${SHORT_VERSION}.html
 
-          # Build the appcast <item> with releaseNotesLink
+          # Store version data for changelog generation
+          cat > /tmp/release-data/current.json << DATEOF
+          {"version":"${SHORT_VERSION}","date":"${PUB_DATE}","commits":"${COMMITS_HTML}"}
+          DATEOF
+
+          # Build the appcast <item> — releaseNotesLink points to combined changelog
           cat > /tmp/new_item.xml << ITEM_EOF
               <item>
                 <title>Version ${SHORT_VERSION}</title>
                 <sparkle:version>${SHORT_VERSION}</sparkle:version>
                 <sparkle:shortVersionString>${SHORT_VERSION}</sparkle:shortVersionString>
-                <sparkle:releaseNotesLink>${NOTES_URL}</sparkle:releaseNotesLink>
+                <sparkle:releaseNotesLink>https://neweduai.github.io/PBL-iOS/changelog.html</sparkle:releaseNotesLink>
                 <pubDate>${PUB_DATE}</pubDate>
                 <enclosure
                   url="${DMG_URL}"
@@ -172,7 +136,7 @@ jobs:
               </item>
           ITEM_EOF
 
-      - name: Deploy appcast and release notes to GitHub Pages
+      - name: Deploy appcast and changelog to GitHub Pages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -205,10 +169,104 @@ jobs:
           # Insert new item before </channel>
           sed -i '' '/<\/channel>/r /tmp/new_item.xml' appcast.xml
 
-          # Copy release notes HTML
-          mkdir -p notes
-          cp /tmp/release-notes/${SHORT_VERSION}.html notes/
+          # Read current version data
+          CURRENT_VERSION=$(cat /tmp/release-data/current.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['version'])")
+          CURRENT_DATE=$(cat /tmp/release-data/current.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['date'])")
+          CURRENT_COMMITS=$(cat /tmp/release-data/current.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['commits'])")
 
-          git add appcast.xml notes/
+          # Append new version entry to versions.json (accumulates history)
+          if [ ! -f versions.json ]; then
+            echo "[]" > versions.json
+          fi
+          python3 -c "
+          import json, sys
+          with open('versions.json') as f:
+              versions = json.load(f)
+          versions.insert(0, {
+              'version': '${CURRENT_VERSION}',
+              'date': '${CURRENT_DATE}',
+              'commits': '''${CURRENT_COMMITS}'''
+          })
+          with open('versions.json', 'w') as f:
+              json.dump(versions, f, indent=2)
+          "
+
+          # Generate combined changelog.html from all versions
+          cat > changelog.html << 'HTML_HEAD'
+          <html>
+          <head>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+              padding: 20px 24px;
+              color: #1d1d1f;
+              background: #fff;
+              line-height: 1.6;
+              max-width: 600px;
+            }
+            .version-card {
+              margin-bottom: 24px;
+              padding-bottom: 20px;
+              border-bottom: 1px solid #e5e5e5;
+            }
+            .version-card:last-child {
+              border-bottom: none;
+            }
+            .version-header {
+              display: flex;
+              align-items: baseline;
+              gap: 10px;
+              margin-bottom: 8px;
+            }
+            h2 {
+              font-size: 17px;
+              font-weight: 600;
+              margin: 0;
+              color: #1d1d1f;
+            }
+            .badge {
+              font-size: 11px;
+              font-weight: 500;
+              color: #fff;
+              background: #007aff;
+              padding: 2px 8px;
+              border-radius: 10px;
+            }
+            .date {
+              font-size: 12px;
+              color: #86868b;
+              margin-bottom: 10px;
+            }
+            ul {
+              padding-left: 18px;
+              margin: 0;
+            }
+            li {
+              font-size: 13px;
+              margin-bottom: 5px;
+              color: #333;
+            }
+          </style>
+          </head>
+          <body>
+          HTML_HEAD
+
+          # Build version cards from versions.json
+          python3 -c "
+          import json
+          with open('versions.json') as f:
+              versions = json.load(f)
+          for i, v in enumerate(versions):
+              badge = ' <span class=\"badge\">LATEST</span>' if i == 0 else ''
+              print(f'<div class=\"version-card\">')
+              print(f'  <div class=\"version-header\"><h2>v{v[\"version\"]}</h2>{badge}</div>')
+              print(f'  <div class=\"date\">{v[\"date\"]}</div>')
+              print(f'  <ul>{v[\"commits\"]}</ul>')
+              print(f'</div>')
+          " >> changelog.html
+
+          echo "</body></html>" >> changelog.html
+
+          git add appcast.xml changelog.html versions.json
           git commit -m "Update appcast for ${VERSION}" || true
           git push origin gh-pages
