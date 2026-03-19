@@ -155,8 +155,13 @@ jobs:
             git rm -rf . 2>/dev/null || true
           fi
 
-          # Create appcast if it doesn't exist
-          if [ ! -f appcast.xml ]; then
+          # Create or reset appcast if missing or malformed
+          if [ ! -f appcast.xml ] || ! python3 -c "
+          import xml.etree.ElementTree as ET
+          try: ET.parse('appcast.xml')
+          except: exit(1)
+          " 2>/dev/null; then
+            echo "Resetting malformed appcast.xml"
             cat > appcast.xml << 'HEADER'
           <?xml version="1.0" encoding="utf-8"?>
           <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -166,108 +171,76 @@ jobs:
             </channel>
           </rss>
           HEADER
+            # Also reset versions.json since appcast was corrupted
+            echo "[]" > versions.json
           fi
 
-          # Insert new item before </channel>
-          sed -i '' '/<\/channel>/r /tmp/new_item.xml' appcast.xml
-
           # Read current version data
-          CURRENT_VERSION=$(cat /tmp/release-data/current.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['version'])")
-          CURRENT_DATE=$(cat /tmp/release-data/current.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['date'])")
-          CURRENT_COMMITS=$(cat /tmp/release-data/current.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['commits'])")
+          CURRENT_VERSION=$(python3 -c "import json; print(json.load(open('/tmp/release-data/current.json'))['version'])")
+          CURRENT_DATE=$(python3 -c "import json; print(json.load(open('/tmp/release-data/current.json'))['date'])")
+          CURRENT_COMMITS=$(python3 -c "import json; print(json.load(open('/tmp/release-data/current.json'))['commits'])")
 
-          # Append new version entry to versions.json (accumulates history)
+          # Accumulate version history
           if [ ! -f versions.json ]; then
             echo "[]" > versions.json
           fi
-          python3 -c "
-          import json, sys
-          with open('versions.json') as f:
-              versions = json.load(f)
-          versions.insert(0, {
-              'version': '${CURRENT_VERSION}',
-              'date': '${CURRENT_DATE}',
-              'commits': '''${CURRENT_COMMITS}'''
-          })
-          with open('versions.json', 'w') as f:
-              json.dump(versions, f, indent=2)
-          "
 
-          # Generate combined changelog.html from all versions
-          cat > changelog.html << 'HTML_HEAD'
-          <html>
+          # Use python for all XML/HTML generation to avoid sed issues
+          python3 << 'PYSCRIPT'
+          import json, os
+
+          short_version = os.environ.get("SHORT_VERSION", "${SHORT_VERSION}")
+          new_item_xml = open("/tmp/new_item.xml").read()
+
+          # --- Fix appcast.xml: insert item inside <channel> ---
+          with open("appcast.xml", "r") as f:
+              content = f.read()
+          # Insert before </channel>
+          content = content.replace("  </channel>", new_item_xml + "  </channel>")
+          with open("appcast.xml", "w") as f:
+              f.write(content)
+
+          # --- Update versions.json ---
+          with open("versions.json") as f:
+              versions = json.load(f)
+          with open("/tmp/release-data/current.json") as f:
+              current = json.load(f)
+          versions.insert(0, current)
+          with open("versions.json", "w") as f:
+              json.dump(versions, f, indent=2)
+
+          # --- Generate changelog.html ---
+          html = """<html>
           <head>
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-              padding: 20px 24px;
-              color: #1d1d1f;
-              background: #fff;
-              line-height: 1.6;
-              max-width: 600px;
+              padding: 20px 24px; color: #1d1d1f; background: #fff; line-height: 1.6; max-width: 600px;
             }
-            .version-card {
-              margin-bottom: 24px;
-              padding-bottom: 20px;
-              border-bottom: 1px solid #e5e5e5;
-            }
-            .version-card:last-child {
-              border-bottom: none;
-            }
-            .version-header {
-              display: flex;
-              align-items: baseline;
-              gap: 10px;
-              margin-bottom: 8px;
-            }
-            h2 {
-              font-size: 17px;
-              font-weight: 600;
-              margin: 0;
-              color: #1d1d1f;
-            }
-            .badge {
-              font-size: 11px;
-              font-weight: 500;
-              color: #fff;
-              background: #007aff;
-              padding: 2px 8px;
-              border-radius: 10px;
-            }
-            .date {
-              font-size: 12px;
-              color: #86868b;
-              margin-bottom: 10px;
-            }
-            ul {
-              padding-left: 18px;
-              margin: 0;
-            }
-            li {
-              font-size: 13px;
-              margin-bottom: 5px;
-              color: #333;
-            }
+            .version-card { margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #e5e5e5; }
+            .version-card:last-child { border-bottom: none; }
+            .version-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+            h2 { font-size: 17px; font-weight: 600; margin: 0; color: #1d1d1f; }
+            .badge { font-size: 11px; font-weight: 500; color: #fff; background: #007aff; padding: 2px 8px; border-radius: 10px; }
+            .date { font-size: 12px; color: #86868b; margin-bottom: 10px; }
+            ul { padding-left: 18px; margin: 0; }
+            li { font-size: 13px; margin-bottom: 5px; color: #333; }
           </style>
           </head>
           <body>
-          HTML_HEAD
-
-          # Build version cards from versions.json
-          python3 -c "
-          import json
-          with open('versions.json') as f:
-              versions = json.load(f)
+          """
           for i, v in enumerate(versions):
-              badge = ' <span class=\"badge\">LATEST</span>' if i == 0 else ''
-              print(f'<div class=\"version-card\">')
-              print(f'  <div class=\"version-header\"><h2>v{v[\"version\"]}</h2>{badge}</div>')
-              print(f'  <div class=\"date\">{v[\"date\"]}</div>')
-              print(f'  <ul>{v[\"commits\"]}</ul>')
-              print(f'</div>')
-          " >> changelog.html
+              badge = ' <span class="badge">LATEST</span>' if i == 0 else ''
+              html += f'<div class="version-card">\n'
+              html += f'  <div class="version-header"><h2>v{v["version"]}</h2>{badge}</div>\n'
+              html += f'  <div class="date">{v["date"]}</div>\n'
+              html += f'  <ul>{v["commits"]}</ul>\n'
+              html += f'</div>\n'
+          html += "</body></html>"
 
-          echo "</body></html>" >> changelog.html
+          with open("changelog.html", "w") as f:
+              f.write(html)
+          PYSCRIPT
 
           git add appcast.xml changelog.html versions.json
           git commit -m "Update appcast for ${VERSION}" || true
