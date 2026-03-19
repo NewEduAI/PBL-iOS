@@ -1,0 +1,45 @@
+name: Build & Release DMG
+
+on:
+  push:
+    branches: [main]
+
+# Only run one build at a time, cancel in-progress builds on new push
+concurrency:
+  group: build-dmg
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Build DMG
+        run: ./scripts/build_dmg.sh
+
+      - name: Generate release tag
+        id: tag
+        run: |
+          TAG="build-$(date +%Y%m%d-%H%M%S)"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          gh release create "${{ steps.tag.outputs.tag }}" \
+            build/PBLZone.dmg \
+            --title "PBL Zone (${{ steps.tag.outputs.short_sha }})" \
+            --notes "Auto-built from \`${{ steps.tag.outputs.short_sha }}\`: ${COMMIT_MSG}" \
+            --latest
