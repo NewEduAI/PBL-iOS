@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
 
-# Only run one build at a time, cancel in-progress builds on new push
 concurrency:
   group: build-dmg
   cancel-in-progress: true
@@ -14,13 +13,22 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: write
+      pages: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Download Sparkle tools
+        run: |
+          curl -L -o /tmp/Sparkle.tar.xz "https://github.com/sparkle-project/Sparkle/releases/download/2.9.0/Sparkle-2.9.0.tar.xz"
+          mkdir -p /tmp/sparkle
+          tar xf /tmp/Sparkle.tar.xz -C /tmp/sparkle
 
       - name: Build DMG
         run: ./scripts/build_dmg.sh
@@ -33,13 +41,28 @@ jobs:
           if [ -z "$LATEST" ]; then
             NEXT="v1.0.0"
           else
-            # Increment patch: v1.0.2 → v1.0.3
             IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST#v}"
             NEXT="v${MAJOR}.${MINOR}.$((PATCH + 1))"
           fi
           echo "version=$NEXT" >> "$GITHUB_OUTPUT"
           echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
           echo "Next version: $NEXT"
+
+      - name: Sign DMG with Sparkle key
+        id: sign
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          # sign_update reads the key from env var SPARKLE_KEY or a file
+          echo "$SPARKLE_PRIVATE_KEY" > /tmp/sparkle_key
+          SIGN_OUTPUT=$(/tmp/sparkle/bin/sign_update build/PBLZone.dmg -f /tmp/sparkle_key)
+          rm /tmp/sparkle_key
+          echo "Signature output: $SIGN_OUTPUT"
+          # Extract edSignature and length
+          ED_SIGNATURE=$(echo "$SIGN_OUTPUT" | grep -o 'sparkle:edSignature="[^"]*"' | cut -d'"' -f2)
+          LENGTH=$(echo "$SIGN_OUTPUT" | grep -o 'length="[^"]*"' | cut -d'"' -f2)
+          echo "signature=$ED_SIGNATURE" >> "$GITHUB_OUTPUT"
+          echo "length=$LENGTH" >> "$GITHUB_OUTPUT"
 
       - name: Create Release
         env:
@@ -51,3 +74,57 @@ jobs:
             --title "PBL Zone ${{ steps.tag.outputs.version }}" \
             --notes "**${{ steps.tag.outputs.version }}** (${{ steps.tag.outputs.short_sha }}): ${COMMIT_MSG}" \
             --latest
+
+      - name: Generate appcast.xml
+        run: |
+          VERSION="${{ steps.tag.outputs.version }}"
+          SHORT_VERSION="${VERSION#v}"
+          SIGNATURE="${{ steps.sign.outputs.signature }}"
+          LENGTH="${{ steps.sign.outputs.length }}"
+          DMG_URL="https://github.com/NewEduAI/PBL-iOS/releases/download/${VERSION}/PBLZone.dmg"
+
+          mkdir -p docs
+          cat > docs/appcast.xml << APPCAST_EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+            <channel>
+              <title>PBL Zone Updates</title>
+              <language>en</language>
+              <item>
+                <title>${SHORT_VERSION}</title>
+                <sparkle:version>${SHORT_VERSION}</sparkle:version>
+                <sparkle:shortVersionString>${SHORT_VERSION}</sparkle:shortVersionString>
+                <pubDate>$(date -R)</pubDate>
+                <enclosure
+                  url="${DMG_URL}"
+                  sparkle:edSignature="${SIGNATURE}"
+                  length="${LENGTH}"
+                  type="application/octet-stream"
+                />
+              </item>
+            </channel>
+          </rss>
+          APPCAST_EOF
+
+      - name: Deploy appcast to GitHub Pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create or update gh-pages branch
+          if git rev-parse --verify origin/gh-pages >/dev/null 2>&1; then
+            git checkout gh-pages
+            cp docs/appcast.xml appcast.xml
+            git add appcast.xml
+            git commit -m "Update appcast for ${{ steps.tag.outputs.version }}" || true
+            git push origin gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf . 2>/dev/null || true
+            cp docs/appcast.xml appcast.xml
+            git add appcast.xml
+            git commit -m "Initial appcast for ${{ steps.tag.outputs.version }}"
+            git push origin gh-pages
+          fi

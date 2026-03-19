@@ -7,12 +7,19 @@
 
 import SwiftUI
 import UserNotifications
+import Sparkle
 
 @main
 struct PBLAppZone: App {
     @State private var appState = AppState()
+    private let updaterController: SPUStandardUpdaterController
 
     init() {
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
         UNUserNotificationCenter.current()
             .requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
@@ -56,6 +63,13 @@ struct PBLAppZone: App {
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
+        .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") {
+                    updaterController.checkForUpdates(nil)
+                }
+            }
+        }
 
         // Project workspace windows — opened via openWindow(id: "project-view", value: "projectId|groupId")
         WindowGroup(id: "project-view", for: String.self) { $windowKey in
