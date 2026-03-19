@@ -17,6 +17,19 @@
     </item>
   </channel>
     <item>
+      <title>Version 1.0.5</title>
+      <sparkle:version>1.0.5</sparkle:version>
+      <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
+      <sparkle:releaseNotesLink>https://neweduai.github.io/PBL-iOS/changelog.html</sparkle:releaseNotesLink>
+      <pubDate>Thu, 19 Mar 2026 03:36:04 +0000</pubDate>
+      <enclosure
+        url="https://github.com/NewEduAI/PBL-iOS/releases/download/v1.0.5/PBLZone.dmg"
+        sparkle:edSignature="LfZUwwu8oMyl/wmtQQrGSiGfYdH4Lob+AuY9M9VHnhd1z0hhpua4tt4trolCCpOEWww1mkpJtiHapqAcpzbUAw=="
+        length="7715018"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>Version 1.0.4</title>
       <sparkle:version>1.0.4</sparkle:version>
       <sparkle:shortVersionString>1.0.4</sparkle:shortVersionString>
