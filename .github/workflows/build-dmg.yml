@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-15
     permissions:
       contents: write
       pages: write
@@ -22,7 +22,13 @@ jobs:
           fetch-depth: 0
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+          sw_vers
+
+      - name: Resolve SPM dependencies
+        run: xcodebuild -project PBL.xcodeproj -scheme "PBL Zone" -resolvePackageDependencies
 
       - name: Download Sparkle tools
         run: |
