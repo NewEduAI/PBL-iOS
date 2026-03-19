@@ -16,4 +16,17 @@
       />
     </item>
   </channel>
+    <item>
+      <title>1.0.3</title>
+      <description><![CDATA[]]></description>
+      <sparkle:version>1.0.3</sparkle:version>
+      <sparkle:shortVersionString>1.0.3</sparkle:shortVersionString>
+      <pubDate>Thu, 19 Mar 2026 03:30:54 +0000</pubDate>
+      <enclosure
+        url="https://github.com/NewEduAI/PBL-iOS/releases/download/v1.0.3/PBLZone.dmg"
+        sparkle:edSignature="cRk874hknxOmflGR/wolMBaL1ttiSN48auGJWsYOmn5E/9WP6hQ4ilDu+2+wq55NTgAb1jTkBLKvgl9QhebXCA=="
+        length="7711321"
+        type="application/octet-stream"
+      />
+    </item>
 </rss>
