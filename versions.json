@@ -1,17 +1,42 @@
 [
   {
     "version": "1.0.7",
-    "date": "Thu, 19 Mar 2026 03:43:34 +0000",
-    "commits": ""
+    "date": "2026-03-19T03:43:33Z",
+    "commits": "<li>Fix appcast XML generation and auto-reset malformed appcast</li>"
   },
   {
     "version": "1.0.6",
-    "date": "Thu, 19 Mar 2026 03:39:47 +0000",
-    "commits": ""
+    "date": "2026-03-19T03:39:46Z",
+    "commits": "<li>Inject version number into app at build time for Sparkle updates</li>"
   },
   {
     "version": "1.0.5",
-    "date": "Thu, 19 Mar 2026 03:36:04 +0000",
-    "commits": ""
+    "date": "2026-03-19T03:36:03Z",
+    "commits": "<li>Show combined version changelog in Sparkle update dialog</li>"
+  },
+  {
+    "version": "1.0.4",
+    "date": "2026-03-19T03:33:34Z",
+    "commits": "<li>Add styled HTML release notes per version in Sparkle update dialog</li>"
+  },
+  {
+    "version": "1.0.3",
+    "date": "2026-03-19T03:30:54Z",
+    "commits": "<li>Accumulate release notes in appcast for version history</li>"
+  },
+  {
+    "version": "1.0.2",
+    "date": "2026-03-19T03:28:45Z",
+    "commits": "<li>Add Sparkle auto-update with appcast and GitHub Pages deployment</li><li>Add SPM resolve step and use macos-15 runner</li><li>Add Sparkle integration and set deployment target to 14.6</li>"
+  },
+  {
+    "version": "1.0.1",
+    "date": "2026-03-19T03:05:00Z",
+    "commits": "<li>Lower macOS deployment target from 15.6 to 14.6 for broader compatibility</li>"
+  },
+  {
+    "version": "1.0.0",
+    "date": "2026-03-19T01:26:19Z",
+    "commits": "<li>Auto-increment version tags for releases</li><li>Add GitHub Actions DMG build workflow and build scripts</li><li>Add access token management for third-party AI app integration</li><li>JWT auth support, auto-login, issueboard fixes, branding rename to OpenMAIC \u00d7 Pro</li><li>Add teacher project edit view with agents, issues, gitlab panels and TA agent chat</li>"
   }
 ]

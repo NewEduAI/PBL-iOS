@@ -4,23 +4,11 @@
     <title>PBL Zone Updates</title>
     <language>en</language>
     <item>
-      <title>1.0.2</title>
-      <sparkle:version>1.0.2</sparkle:version>
-      <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
-      <pubDate>Thu, 19 Mar 2026 03:28:45 +0000</pubDate>
-      <enclosure
-        url="https://github.com/NewEduAI/PBL-iOS/releases/download/v1.0.2/PBLZone.dmg"
-        sparkle:edSignature="7TPr7Dg2trTxKQjs+YeS7H4DYe7h0PzO2qipACkt2qy6DgVZIJlr6yQVkTh8EeG2V2q4LFOojqRmYKtg42bZDw=="
-        length="7689835"
-        type="application/octet-stream"
-      />
-    </item>
-    <item>
       <title>Version 1.0.7</title>
       <sparkle:version>1.0.7</sparkle:version>
       <sparkle:shortVersionString>1.0.7</sparkle:shortVersionString>
       <sparkle:releaseNotesLink>https://neweduai.github.io/PBL-iOS/changelog.html</sparkle:releaseNotesLink>
-      <pubDate>Thu, 19 Mar 2026 03:43:34 +0000</pubDate>
+      <pubDate>2026-03-19T03:43:33Z</pubDate>
       <enclosure
         url="https://github.com/NewEduAI/PBL-iOS/releases/download/v1.0.7/PBLZone.dmg"
         sparkle:edSignature="0B34hNe9Vx1cgES7RfTtrjNJlGRTfP9/CJ6TMhXRec6Ke56G5/MvK2zFNMvBoSI76k4tV/ZgMJUFxemM0TaeBg=="
@@ -28,13 +16,12 @@
         type="application/octet-stream"
       />
     </item>
-  </channel>
     <item>
       <title>Version 1.0.6</title>
       <sparkle:version>1.0.6</sparkle:version>
       <sparkle:shortVersionString>1.0.6</sparkle:shortVersionString>
       <sparkle:releaseNotesLink>https://neweduai.github.io/PBL-iOS/changelog.html</sparkle:releaseNotesLink>
-      <pubDate>Thu, 19 Mar 2026 03:39:47 +0000</pubDate>
+      <pubDate>2026-03-19T03:39:46Z</pubDate>
       <enclosure
         url="https://github.com/NewEduAI/PBL-iOS/releases/download/v1.0.6/PBLZone.dmg"
         sparkle:edSignature="/n6TakeYT6ny47hXDOOlZ82fW+6S+sflX0ZnOZ37SMBK0f9+lHiDTHEHAPBGkpqtHDoXjlMba3WV/g9ZmDuMCw=="
@@ -47,7 +34,7 @@
       <sparkle:version>1.0.5</sparkle:version>
       <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
       <sparkle:releaseNotesLink>https://neweduai.github.io/PBL-iOS/changelog.html</sparkle:releaseNotesLink>
-      <pubDate>Thu, 19 Mar 2026 03:36:04 +0000</pubDate>
+      <pubDate>2026-03-19T03:36:03Z</pubDate>
       <enclosure
         url="https://github.com/NewEduAI/PBL-iOS/releases/download/v1.0.5/PBLZone.dmg"
         sparkle:edSignature="LfZUwwu8oMyl/wmtQQrGSiGfYdH4Lob+AuY9M9VHnhd1z0hhpua4tt4trolCCpOEWww1mkpJtiHapqAcpzbUAw=="
@@ -59,8 +46,8 @@
       <title>Version 1.0.4</title>
       <sparkle:version>1.0.4</sparkle:version>
       <sparkle:shortVersionString>1.0.4</sparkle:shortVersionString>
-      <sparkle:releaseNotesLink>https://neweduai.github.io/PBL-iOS/notes/1.0.4.html</sparkle:releaseNotesLink>
-      <pubDate>Thu, 19 Mar 2026 03:33:34 +0000</pubDate>
+      <sparkle:releaseNotesLink>https://neweduai.github.io/PBL-iOS/changelog.html</sparkle:releaseNotesLink>
+      <pubDate>2026-03-19T03:33:34Z</pubDate>
       <enclosure
         url="https://github.com/NewEduAI/PBL-iOS/releases/download/v1.0.4/PBLZone.dmg"
         sparkle:edSignature="4IH0V0LSL4Me0FuBzetbKe0WqBndluO9yGZ1hX6nMI3JDgJPRXFjYPZ3G4OOLJRREY3mmkhBICiHi9fD5DEcBA=="
@@ -69,11 +56,11 @@
       />
     </item>
     <item>
-      <title>1.0.3</title>
-      <description><![CDATA[]]></description>
+      <title>Version 1.0.3</title>
       <sparkle:version>1.0.3</sparkle:version>
       <sparkle:shortVersionString>1.0.3</sparkle:shortVersionString>
-      <pubDate>Thu, 19 Mar 2026 03:30:54 +0000</pubDate>
+      <sparkle:releaseNotesLink>https://neweduai.github.io/PBL-iOS/changelog.html</sparkle:releaseNotesLink>
+      <pubDate>2026-03-19T03:30:54Z</pubDate>
       <enclosure
         url="https://github.com/NewEduAI/PBL-iOS/releases/download/v1.0.3/PBLZone.dmg"
         sparkle:edSignature="cRk874hknxOmflGR/wolMBaL1ttiSN48auGJWsYOmn5E/9WP6hQ4ilDu+2+wq55NTgAb1jTkBLKvgl9QhebXCA=="
@@ -81,4 +68,18 @@
         type="application/octet-stream"
       />
     </item>
+    <item>
+      <title>Version 1.0.2</title>
+      <sparkle:version>1.0.2</sparkle:version>
+      <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
+      <sparkle:releaseNotesLink>https://neweduai.github.io/PBL-iOS/changelog.html</sparkle:releaseNotesLink>
+      <pubDate>2026-03-19T03:28:45Z</pubDate>
+      <enclosure
+        url="https://github.com/NewEduAI/PBL-iOS/releases/download/v1.0.2/PBLZone.dmg"
+        sparkle:edSignature="7TPr7Dg2trTxKQjs+YeS7H4DYe7h0PzO2qipACkt2qy6DgVZIJlr6yQVkTh8EeG2V2q4LFOojqRmYKtg42bZDw=="
+        length="7689835"
+        type="application/octet-stream"
+      />
+    </item>
+  </channel>
 </rss>
