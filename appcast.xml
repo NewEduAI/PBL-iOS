@@ -4,6 +4,19 @@
     <title>PBL Zone Updates</title>
     <language>en</language>
     <item>
+      <title>Version 1.0.8</title>
+      <sparkle:version>1.0.8</sparkle:version>
+      <sparkle:shortVersionString>1.0.8</sparkle:shortVersionString>
+      <sparkle:releaseNotesLink>https://neweduai.github.io/PBL-iOS/changelog.html</sparkle:releaseNotesLink>
+      <pubDate>2026-03-20T04:14:27Z</pubDate>
+      <enclosure
+        url="https://github.com/NewEduAI/PBL-iOS/releases/download/v1.0.8/PBLZone.dmg"
+        sparkle:edSignature="derLX1tHwaP8NuCGe/yUV5XBc8KScOQnS2uyiAF5hKUTsK8KA90IpPMvqWclNbp1paNIAzq6oZOht4kMTENLCA=="
+        length="7714992"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>Version 1.0.7</title>
       <sparkle:version>1.0.7</sparkle:version>
       <sparkle:shortVersionString>1.0.7</sparkle:shortVersionString>

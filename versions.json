@@ -1,5 +1,10 @@
 [
   {
+    "version": "1.0.8",
+    "date": "2026-03-20T04:14:27Z",
+    "commits": "<li>Rebuild changelog from GitHub API with full commit details</li>"
+  },
+  {
     "version": "1.0.7",
     "date": "2026-03-19T03:43:33Z",
     "commits": "<li>Fix appcast XML generation and auto-reset malformed appcast</li>"
@@ -28,15 +33,5 @@
     "version": "1.0.2",
     "date": "2026-03-19T03:28:45Z",
     "commits": "<li>Add Sparkle auto-update with appcast and GitHub Pages deployment</li><li>Add SPM resolve step and use macos-15 runner</li><li>Add Sparkle integration and set deployment target to 14.6</li>"
-  },
-  {
-    "version": "1.0.1",
-    "date": "2026-03-19T03:05:00Z",
-    "commits": "<li>Lower macOS deployment target from 15.6 to 14.6 for broader compatibility</li>"
-  },
-  {
-    "version": "1.0.0",
-    "date": "2026-03-19T01:26:19Z",
-    "commits": "<li>Auto-increment version tags for releases</li><li>Add GitHub Actions DMG build workflow and build scripts</li><li>Add access token management for third-party AI app integration</li><li>JWT auth support, auto-login, issueboard fixes, branding rename to OpenMAIC \u00d7 Pro</li><li>Add teacher project edit view with agents, issues, gitlab panels and TA agent chat</li>"
   }
 ]
