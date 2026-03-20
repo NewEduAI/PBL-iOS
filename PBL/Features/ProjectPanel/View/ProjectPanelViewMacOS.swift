@@ -927,6 +927,11 @@ private struct AccessTokenSheet: View {
     @State private var revokeTarget: AccessToken? = nil
     @State private var error: String? = nil
 
+    /// MCP endpoint: base URL with /api replaced by /mcp
+    private var mcpEndpoint: String {
+        appState.organizationBaseUrl.replacingOccurrences(of: "/api", with: "/mcp")
+    }
+
     private var brandGradient: LinearGradient {
         LinearGradient(
             colors: [
@@ -958,6 +963,24 @@ private struct AccessTokenSheet: View {
                 .buttonStyle(.plain)
             }
             .padding(24)
+
+            Divider()
+
+            // MCP server endpoint
+            VStack(alignment: .leading, spacing: 6) {
+                Text("MCP 服务端地址")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+                Text(mcpEndpoint)
+                    .font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
 
             Divider()
 
