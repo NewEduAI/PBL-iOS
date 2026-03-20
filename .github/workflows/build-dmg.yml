@@ -83,68 +83,13 @@ jobs:
             --notes "**${{ steps.tag.outputs.version }}** (${{ steps.tag.outputs.short_sha }}): ${COMMIT_MSG}" \
             --latest
 
-      - name: Get commit messages since last tag
-        id: changes
-        run: |
-          git fetch --tags
-          LATEST=$(git tag -l 'v*' --sort=-v:refname | head -1)
-          if [ -z "$LATEST" ]; then
-            COMMITS=$(git log --pretty=format:"%s" -10)
-          else
-            COMMITS=$(git log --pretty=format:"%s" "${LATEST}..HEAD")
-          fi
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "commits<<$EOF" >> "$GITHUB_OUTPUT"
-          echo "$COMMITS" >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
-
-      - name: Generate release notes and appcast item
-        run: |
-          VERSION="${{ steps.tag.outputs.version }}"
-          SHORT_VERSION="${VERSION#v}"
-          SIGNATURE="${{ steps.sign.outputs.signature }}"
-          LENGTH="${{ steps.sign.outputs.length }}"
-          DMG_URL="https://github.com/NewEduAI/PBL-iOS/releases/download/${VERSION}/PBLZone.dmg"
-          PUB_DATE="$(date -R)"
-
-          # Save this version's notes as a JSON entry for the combined changelog
-          mkdir -p /tmp/release-data
-          COMMITS_HTML=""
-          while IFS= read -r line; do
-            [ -z "$line" ] && continue
-            ESCAPED=$(echo "$line" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
-            COMMITS_HTML="${COMMITS_HTML}<li>${ESCAPED}</li>"
-          done <<< "${{ steps.changes.outputs.commits }}"
-
-          # Store version data for changelog generation
-          cat > /tmp/release-data/current.json << DATEOF
-          {"version":"${SHORT_VERSION}","date":"${PUB_DATE}","commits":"${COMMITS_HTML}"}
-          DATEOF
-
-          # Build the appcast <item> — releaseNotesLink points to combined changelog
-          cat > /tmp/new_item.xml << ITEM_EOF
-              <item>
-                <title>Version ${SHORT_VERSION}</title>
-                <sparkle:version>${SHORT_VERSION}</sparkle:version>
-                <sparkle:shortVersionString>${SHORT_VERSION}</sparkle:shortVersionString>
-                <sparkle:releaseNotesLink>https://neweduai.github.io/PBL-iOS/changelog.html</sparkle:releaseNotesLink>
-                <pubDate>${PUB_DATE}</pubDate>
-                <enclosure
-                  url="${DMG_URL}"
-                  sparkle:edSignature="${SIGNATURE}"
-                  length="${LENGTH}"
-                  type="application/octet-stream"
-                />
-              </item>
-          ITEM_EOF
-
       - name: Deploy appcast and changelog to GitHub Pages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ steps.tag.outputs.version }}
+          NEW_SIGNATURE: ${{ steps.sign.outputs.signature }}
+          NEW_LENGTH: ${{ steps.sign.outputs.length }}
         run: |
-          VERSION="${{ steps.tag.outputs.version }}"
-          SHORT_VERSION="${VERSION#v}"
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -155,61 +100,114 @@ jobs:
             git rm -rf . 2>/dev/null || true
           fi
 
-          # Create or reset appcast if missing or malformed
-          if [ ! -f appcast.xml ] || ! python3 -c "
-          import xml.etree.ElementTree as ET
-          try: ET.parse('appcast.xml')
-          except: exit(1)
-          " 2>/dev/null; then
-            echo "Resetting malformed appcast.xml"
-            cat > appcast.xml << 'HEADER'
-          <?xml version="1.0" encoding="utf-8"?>
-          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
-            <channel>
-              <title>PBL Zone Updates</title>
-              <language>en</language>
-            </channel>
-          </rss>
-          HEADER
-            # Also reset versions.json since appcast was corrupted
-            echo "[]" > versions.json
-          fi
-
-          # Read current version data
-          CURRENT_VERSION=$(python3 -c "import json; print(json.load(open('/tmp/release-data/current.json'))['version'])")
-          CURRENT_DATE=$(python3 -c "import json; print(json.load(open('/tmp/release-data/current.json'))['date'])")
-          CURRENT_COMMITS=$(python3 -c "import json; print(json.load(open('/tmp/release-data/current.json'))['commits'])")
-
-          # Accumulate version history
-          if [ ! -f versions.json ]; then
-            echo "[]" > versions.json
-          fi
-
-          # Use python for all XML/HTML generation to avoid sed issues
+          # Use Python to rebuild everything from GitHub API + new release
           python3 << 'PYSCRIPT'
-          import json, os
+          import json, os, re, urllib.request
 
-          short_version = os.environ.get("SHORT_VERSION", "${SHORT_VERSION}")
-          new_item_xml = open("/tmp/new_item.xml").read()
+          new_tag = os.environ["NEW_VERSION"]
+          new_ver = new_tag.lstrip("v")
+          new_sig = os.environ["NEW_SIGNATURE"]
+          new_len = os.environ["NEW_LENGTH"]
 
-          # --- Fix appcast.xml: insert item inside <channel> ---
-          with open("appcast.xml", "r") as f:
-              content = f.read()
-          # Insert before </channel>
-          content = content.replace("  </channel>", new_item_xml + "  </channel>")
-          with open("appcast.xml", "w") as f:
-              f.write(content)
+          # Fetch all releases from GitHub API
+          releases = json.loads(urllib.request.urlopen(
+              "https://api.github.com/repos/NewEduAI/PBL-iOS/releases"
+          ).read())
+          v_releases = sorted(
+              [r for r in releases if r["tag_name"].startswith("v")],
+              key=lambda r: [int(x) for x in r["tag_name"][1:].split(".")],
+              reverse=True
+          )
 
-          # --- Update versions.json ---
-          with open("versions.json") as f:
-              versions = json.load(f)
-          with open("/tmp/release-data/current.json") as f:
-              current = json.load(f)
-          versions.insert(0, current)
+          # Get existing signatures from appcast
+          sigs = {}
+          if os.path.exists("appcast.xml"):
+              with open("appcast.xml") as f:
+                  old = f.read()
+              for ver, sig, length in re.findall(
+                  r'<sparkle:version>([^<]+)</sparkle:version>.*?sparkle:edSignature="([^"]*)".*?length="([^"]*)"',
+                  old, re.DOTALL
+              ):
+                  sigs[ver] = (sig, length)
+          # Add new release signature
+          sigs[new_ver] = (new_sig, new_len)
+
+          # Build versions list with commit messages from GitHub compare API
+          versions = []
+          for idx, r in enumerate(v_releases):
+              tag = r["tag_name"]
+              ver = tag[1:]
+              if ver not in sigs:
+                  continue
+              # Get commits for this version
+              if idx < len(v_releases) - 1:
+                  prev_tag = v_releases[idx + 1]["tag_name"]
+                  try:
+                      data = json.loads(urllib.request.urlopen(
+                          f"https://api.github.com/repos/NewEduAI/PBL-iOS/compare/{prev_tag}...{tag}"
+                      ).read())
+                      commits = [c["commit"]["message"].split("\n")[0] for c in data.get("commits", [])]
+                  except:
+                      commits = []
+              else:
+                  try:
+                      data = json.loads(urllib.request.urlopen(
+                          f"https://api.github.com/repos/NewEduAI/PBL-iOS/commits?sha={tag}&per_page=5"
+                      ).read())
+                      commits = [c["commit"]["message"].split("\n")[0] for c in data]
+                  except:
+                      commits = []
+
+              if not commits:
+                  body = r.get("body", "") or ""
+                  if ": " in body:
+                      commits = [body.split(": ", 1)[1].strip()]
+
+              commits_html = ""
+              for msg in commits:
+                  if not msg: continue
+                  msg = msg.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                  commits_html += f"<li>{msg}</li>"
+
+              versions.append({
+                  "version": ver,
+                  "date": r["published_at"],
+                  "commits": commits_html
+              })
+
+          # Save versions.json
           with open("versions.json", "w") as f:
               json.dump(versions, f, indent=2)
 
-          # --- Generate changelog.html ---
+          # Build clean appcast.xml
+          appcast = '<?xml version="1.0" encoding="utf-8"?>\n'
+          appcast += '<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">\n'
+          appcast += '  <channel>\n'
+          appcast += '    <title>PBL Zone Updates</title>\n'
+          appcast += '    <language>en</language>\n'
+          for r in v_releases:
+              ver = r["tag_name"][1:]
+              if ver not in sigs: continue
+              sig, length = sigs[ver]
+              appcast += f'    <item>\n'
+              appcast += f'      <title>Version {ver}</title>\n'
+              appcast += f'      <sparkle:version>{ver}</sparkle:version>\n'
+              appcast += f'      <sparkle:shortVersionString>{ver}</sparkle:shortVersionString>\n'
+              appcast += f'      <sparkle:releaseNotesLink>https://neweduai.github.io/PBL-iOS/changelog.html</sparkle:releaseNotesLink>\n'
+              appcast += f'      <pubDate>{r["published_at"]}</pubDate>\n'
+              appcast += f'      <enclosure\n'
+              appcast += f'        url="https://github.com/NewEduAI/PBL-iOS/releases/download/{r["tag_name"]}/PBLZone.dmg"\n'
+              appcast += f'        sparkle:edSignature="{sig}"\n'
+              appcast += f'        length="{length}"\n'
+              appcast += f'        type="application/octet-stream"\n'
+              appcast += f'      />\n'
+              appcast += f'    </item>\n'
+          appcast += '  </channel>\n'
+          appcast += '</rss>\n'
+          with open("appcast.xml", "w") as f:
+              f.write(appcast)
+
+          # Build changelog.html
           html = """<html>
           <head>
           <style>
@@ -234,14 +232,16 @@ jobs:
               html += f'<div class="version-card">\n'
               html += f'  <div class="version-header"><h2>v{v["version"]}</h2>{badge}</div>\n'
               html += f'  <div class="date">{v["date"]}</div>\n'
-              html += f'  <ul>{v["commits"]}</ul>\n'
+              if v["commits"]:
+                  html += f'  <ul>{v["commits"]}</ul>\n'
               html += f'</div>\n'
           html += "</body></html>"
-
           with open("changelog.html", "w") as f:
               f.write(html)
+
+          print(f"Updated: {len(versions)} versions in changelog")
           PYSCRIPT
 
           git add appcast.xml changelog.html versions.json
-          git commit -m "Update appcast for ${VERSION}" || true
+          git commit -m "Update appcast for ${NEW_VERSION}" || true
           git push origin gh-pages
