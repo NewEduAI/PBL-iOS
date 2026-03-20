@@ -6,7 +6,7 @@ PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SCHEME="PBL Zone"
 BUILD_DIR="${PROJECT_DIR}/build"
 OUT_DMG="${PROJECT_DIR}/build/PBLZone.dmg"
-UNLOCK_SCRIPT="${PROJECT_DIR}/scripts/unlock_quarantine.command"
+DMG_RESOURCES="${PROJECT_DIR}/scripts/dmg-resources"
 # Version: pass as first argument (e.g. ./build_dmg.sh 1.0.3), defaults to git tag
 APP_VERSION="${1:-}"
 if [ -z "$APP_VERSION" ]; then
@@ -55,8 +55,8 @@ echo "📦  Packaging DMG..."
 STAGE=$(mktemp -d)
 cp -R "$APP" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
-cp "$UNLOCK_SCRIPT" "$STAGE/Unlock PBL Zone.command"
-chmod +x "$STAGE/Unlock PBL Zone.command"
+cp "$DMG_RESOURCES/README.txt" "$STAGE/"
+cp "$DMG_RESOURCES/安装说明.txt" "$STAGE/"
 
 # ── Create DMG ──────────────────────────────────────────────────────────
 hdiutil create \
