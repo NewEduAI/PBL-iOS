@@ -1,5 +1,10 @@
 [
   {
+    "version": "1.0.16",
+    "date": "2026-03-25T06:31:03Z",
+    "commits": "<li>Fix GitHub API rate limit in changelog build by using authenticated requests</li><li>Remove domain restriction for login, fall back to default institution</li><li>Merge branch 'open'</li>"
+  },
+  {
     "version": "1.0.15",
     "date": "2026-03-25T06:20:00Z",
     "commits": "<li>Fix GitHub API rate limit in changelog build by using authenticated requests</li>"
