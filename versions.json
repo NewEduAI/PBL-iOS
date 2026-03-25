@@ -1,5 +1,10 @@
 [
   {
+    "version": "1.0.14",
+    "date": "2026-03-25T06:15:34Z",
+    "commits": "<li>Merge pull request #1 from NewEduAI/open</li>"
+  },
+  {
     "version": "1.0.8",
     "date": "2026-03-20T04:14:27Z",
     "commits": "<li>Rebuild changelog from GitHub API with full commit details</li>"
