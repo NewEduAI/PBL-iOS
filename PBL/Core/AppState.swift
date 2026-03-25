@@ -83,16 +83,19 @@ class AppState {
     }
 
     func logout() {
-        self.userId = ""
-        self.token = ""
-        self.username = "未登录"
-        self.email = ""
-        self.password = ""
-        self.isTeacher = false
-        self.organization = "个人"
-        self.organizationBaseUrl = "https://assignment.maic.chat/api"
-        self.userAPI = nil
+        // Clear credentials and refresher FIRST so auto-login cannot re-trigger.
         BaseAPI.tokenRefresher = nil
         clearCredentials()
+        self.password = ""
+        self.email = ""
+        self.userId = ""
+        self.userAPI = nil
+        self.username = "未登录"
+        self.isTeacher = false
+        self.isAutoLoggingIn = false
+        self.organization = "个人"
+        self.organizationBaseUrl = "https://assignment.maic.chat/api"
+        // Set token last — this triggers the UI to show the login screen.
+        self.token = ""
     }
 }

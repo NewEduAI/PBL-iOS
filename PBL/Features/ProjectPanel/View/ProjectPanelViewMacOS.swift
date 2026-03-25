@@ -30,6 +30,7 @@ struct ProjectPanelViewMacOS: View {
     @State private var showCreateProject = false
     @State private var pendingJoinProject: Project? = nil
     @State private var showAccessTokens = false
+    @State private var showSettings = false
 
     private var brandGradient: LinearGradient {
         LinearGradient(
@@ -85,6 +86,10 @@ struct ProjectPanelViewMacOS: View {
             AccessTokenSheet()
                 .environment(appState)
         }
+        .sheet(isPresented: $showSettings) {
+            SettingsSheet()
+                .environment(appState)
+        }
         .sheet(item: $pendingJoinProject) { project in
             JoinProjectSheet(project: project) { groupId in
                 pendingJoinProject = nil
@@ -103,16 +108,28 @@ struct ProjectPanelViewMacOS: View {
         VStack(alignment: .leading, spacing: 0) {
 
             // Branding + user greeting
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 10) {
                 BrandingText(fontSize: 18)
 
-                Text(appState.username)
-                    .font(.callout.bold())
-                    .lineLimit(1)
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle()
+                            .fill(brandGradient)
+                            .frame(width: 28, height: 28)
+                        Text(String(appState.username.prefix(1)))
+                            .font(.caption.bold())
+                            .foregroundStyle(.white)
+                    }
 
-                Text(appState.organization)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(appState.username)
+                            .font(.callout.bold())
+                            .lineLimit(1)
+                        Text(appState.organization)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
             .padding(.horizontal, 16)
             .padding(.top, 24)
@@ -129,9 +146,6 @@ struct ProjectPanelViewMacOS: View {
                     .padding(.top, 14)
                     .padding(.bottom, 4)
 
-//                SidebarActionRow(icon: "ticket", label: "加入课程码") {
-//                    showJoinByCode = true
-//                }
                 SidebarActionRow(icon: "globe", label: "加入开放项目") {
                     showJoinOpen = true
                 }
@@ -149,39 +163,23 @@ struct ProjectPanelViewMacOS: View {
 
             Divider()
 
-            // Bottom user row
-            HStack(spacing: 10) {
-                ZStack {
-                    Circle()
-                        .fill(brandGradient)
-                        .frame(width: 28, height: 28)
-                    Text(String(appState.username.prefix(1)))
-                        .font(.caption.bold())
-                        .foregroundStyle(.white)
-                }
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(appState.username)
-                        .font(.callout.bold())
-                        .lineLimit(1)
-                    Text(appState.isTeacher ? "教师" : "学生")
-                        .font(.caption)
+            // Bottom settings button
+            Button {
+                showSettings = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "gearshape")
                         .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Button {
-                    appState.logout()
-                } label: {
-                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                    Text("设置")
+                        .font(.callout)
                         .foregroundStyle(.secondary)
+                    Spacer()
                 }
-                .buttonStyle(.borderless)
-                .help("退出登录")
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .buttonStyle(.plain)
         }
         .frame(width: 220)
         .background(Color(NSColor.controlBackgroundColor))
@@ -909,6 +907,133 @@ struct BrandingText: View {
         }
         .font(.system(size: fontSize, weight: .bold))
         .italic()
+    }
+}
+
+// MARK: - Settings sheet
+
+private struct SettingsSheet: View {
+    @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
+
+    private var brandGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color(red: 98/255, green: 83/255, blue: 225/255),
+                Color(red: 4/255, green: 190/255, blue: 254/255)
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
+            HStack {
+                Text("设置")
+                    .font(.title2.bold())
+                Spacer()
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(24)
+
+            Divider()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // User info section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("账号信息")
+                            .font(.callout.bold())
+
+                        HStack(spacing: 14) {
+                            ZStack {
+                                Circle()
+                                    .fill(brandGradient)
+                                    .frame(width: 48, height: 48)
+                                Text(String(appState.username.prefix(1)))
+                                    .font(.title3.bold())
+                                    .foregroundStyle(.white)
+                            }
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(appState.username)
+                                    .font(.callout.bold())
+                                Text(appState.email)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                HStack(spacing: 6) {
+                                    Text(appState.isTeacher ? "教师" : "学生")
+                                        .font(.caption2)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.accentColor.opacity(0.12))
+                                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                                    Text(appState.organization)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color(NSColor.controlBackgroundColor))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
+                                )
+                        )
+                    }
+
+                    Divider()
+
+                    // About section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("关于")
+                            .font(.callout.bold())
+                        HStack {
+                            BrandingText(fontSize: 14)
+                            Spacer()
+                            Text("v1.0")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .padding(24)
+            }
+
+            Spacer()
+
+            Divider()
+
+            // Logout button at the bottom
+            Button {
+                dismiss()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    appState.logout()
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                    Text("退出登录")
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+            }
+            .buttonStyle(.bordered)
+            .tint(.red)
+            .padding(24)
+        }
+        .frame(width: 420, height: 460)
     }
 }
 
