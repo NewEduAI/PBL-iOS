@@ -13,9 +13,7 @@ func tryLogin(
     password: String,
     emailDomain: String
 ) async throws -> Bool {
-    guard let institution = InstitutionList.fromEmailDomain(emailDomain) else {
-        return false
-    }
+    let institution = InstitutionList.fromEmailDomain(emailDomain) ?? InstitutionList.defaultInstitution
     let userAPI = UserAPI(baseURL: institution.baseUrl)
     let authResponse = try await userAPI.login(email: email, password: password)
     let authedAPI = UserAPI(baseURL: institution.baseUrl, token: authResponse.token)
