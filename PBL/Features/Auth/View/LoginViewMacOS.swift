@@ -316,10 +316,15 @@ struct LoginViewMacOS: View {
                     isTeacher: regIsTeacher,
                     emailDomain: regEmail.components(separatedBy: "@").last ?? ""
                 )
-                if !success { errorMessage = "不支持的教育机构域名" }
+                if !success {
+                    print("Register failed: institution not found for domain \(regEmail.components(separatedBy: "@").last ?? "")")
+                    errorMessage = "不支持的教育机构域名"
+                }
             } catch let error as APIError {
+                print("Register API error: \(error.message) (HTTP \(error.statusCode))")
                 errorMessage = error.message
             } catch {
+                print("Register error: \(error)")
                 errorMessage = "注册失败: \(error.localizedDescription)"
             }
             isLoading = false
